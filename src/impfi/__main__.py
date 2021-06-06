@@ -76,7 +76,7 @@ class Impfbot:
           if slot is not None:
             logger.info('Found open slot for %s', checker.get_description())
             self._dispatch(checker.get_description(), slot)
-      time.sleep(60 * 60)  # Run every other minute
+      time.sleep(60 * 5)  # Run every five minutes
 
   def main(self):
     thread = threading.Thread(target=self._check_slots)
