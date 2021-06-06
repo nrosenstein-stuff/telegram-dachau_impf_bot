@@ -1,10 +1,12 @@
 
+import datetime
 import html
 import logging
 import time
 import threading
 import traceback
 import typing as t
+from sqlalchemy.orm.session import sessionmaker
 import telegram, telegram.ext
 from impfi import model
 from impfi.slotchecker import DachauMedSlotChecker, SlotChecker, SlotResponse
@@ -18,8 +20,13 @@ class Impfbot:
     self._token = token
     self._slotcheckers = slotcheckers
     self._updater = telegram.ext.Updater(token)
+    self._updater.dispatcher.add_handler(telegram.ext.CommandHandler('status', self._status))
     self._updater.dispatcher.add_handler(telegram.ext.CommandHandler('register', self._register))
     self._updater.dispatcher.add_handler(telegram.ext.CommandHandler('unregister', self._unregister))
+    self._last_check_at: t.Optional[datetime.datetime] = None
+
+  def _status(self, update: telegram.Update, context: telegram.ext.CallbackContext) -> None:
+    update.message.reply_markdown(f'Last check at: {self._last_check_at}')
 
   def _register(self, update: telegram.Update, context: telegram.ext.CallbackContext) -> None:
     user = update.message.from_user
@@ -76,6 +83,7 @@ class Impfbot:
           if slot is not None:
             logger.info('Found open slot for %s', checker.get_description())
             self._dispatch(checker.get_description(), slot)
+      self._last_check_at = datetime.datetime.now()
       time.sleep(60 * 5)  # Run every five minutes
 
   def main(self):
