@@ -3,33 +3,88 @@ import datetime
 import html
 import logging
 import time
+import telegram, telegram.ext
 import threading
 import traceback
 import typing as t
-from sqlalchemy.orm.session import sessionmaker
-import telegram, telegram.ext
-from impfi import model
-from impfi.slotchecker import DachauMedSlotChecker, SlotChecker, SlotResponse
+from dataclasses import dataclass
+from databind import yaml
+from functools import reduce
+from impfi import api, model
 from telegram.parsemode import ParseMode
 
 logger = logging.getLogger(__name__)
 
+
+@dataclass
+class Config:
+  token: str
+  admin_chat_id: int = 56970700  # Niklas R. <-> Impfi Bot
+  database_spec: str = 'sqlite+pysqlite:///impfi.db'
+
+  @classmethod
+  def load(cls, filename: str) -> 'Config':
+    with open(filename) as fp:
+      return yaml.from_stream(cls, fp)
+
+
 class Impfbot:
 
-  def __init__(self, token: str, slotcheckers: t.List[SlotChecker]) -> None:
-    self._token = token
-    self._slotcheckers = slotcheckers
-    self._updater = telegram.ext.Updater(token)
+  def __init__(self, config: Config) -> None:
+    self._config = config
+    self._centers = reduce(
+      lambda a, b: a + b.get_vaccination_centers(), api.IPlugin.load_plugins(),
+      t.cast(t.List[api.IVaccinationCenter], []))
+    self._updater = telegram.ext.Updater(config.token)
     self._updater.dispatcher.add_handler(telegram.ext.CommandHandler('status', self._status))
     self._updater.dispatcher.add_handler(telegram.ext.CommandHandler('register', self._register))
     self._updater.dispatcher.add_handler(telegram.ext.CommandHandler('unregister', self._unregister))
     self._last_check_at: t.Optional[datetime.datetime] = None
 
+  def _dispatch_to_admin(self, message: str, code: t.Optional[str] = None) -> None:
+    message = html.escape(message)
+    if code is not None:
+      message += f'\n\n<pre><code>{html.escape(code)}</code></pre>'
+    self._updater.bot.send_message(
+      chat_id=self._config.admin_chat_id,
+      text=message,
+      parse_mode=ParseMode.HTML
+    )
+
+  def _dispatch(self, name: str, url: str, vaccine_type: api.VaccineType, dates: t.List[datetime.date]) -> None:
+    with model.session() as session:
+      for reg in session.query(model.UserRegistration):
+        self._updater.bot.send_message(
+          chat_id=reg.chat_id,
+          text=f'Slots for {vaccine_type.name} are available at <a href="{url}">{name}</a> '\
+            'for the following dates: ' + ', '.join(d.strftime('%Y-%m-%d') for d in dates),
+          parse_mode=ParseMode.HTML,
+        )
+
+  def _check_availability_worker(self):
+    while True:
+      for vaccination_center in self._centers:
+        logger.info('Checking availability of %s', vaccination_center.uid)
+        try:
+          availability = vaccination_center.check_availability()
+        except Exception:
+          logger.exception('Error while checking availability of %s', vaccination_center.uid)
+          self._dispatch_to_admin(f'Error in {vaccination_center.uid}', code=traceback.print_exc())
+        else:
+          if availability is not None:
+            for vaccine_type, info in availability.items():
+              self._dispatch(vaccination_center.name, vaccination_center.url, vaccine_type, availability.dates)
+      self._last_check_at = datetime.datetime.now()
+      time.sleep(60 * 5)  # Run every five minutes
+
   def _status(self, update: telegram.Update, context: telegram.ext.CallbackContext) -> None:
+    assert update.message
     update.message.reply_markdown(f'Last check at: {self._last_check_at}')
 
   def _register(self, update: telegram.Update, context: telegram.ext.CallbackContext) -> None:
+    assert update.message
     user = update.message.from_user
+    assert user
     with model.session() as session:
       has_user = session.query(model.UserRegistration).filter(model.UserRegistration.id == user.id).first()
       if has_user:
@@ -40,7 +95,9 @@ class Impfbot:
       update.message.reply_markdown(f'Hey **{user.first_name}**, welcome to the crew. 💉💪')
 
   def _unregister(self, update: telegram.Update, context: telegram.ext.CallbackContext) -> None:
+    assert update.message
     user = update.message.from_user
+    assert user
     with model.session() as session:
       has_user = session.query(model.UserRegistration).filter(model.UserRegistration.id == user.id).first()
       if not has_user:
@@ -50,44 +107,8 @@ class Impfbot:
       session.commit()
       update.message.reply_markdown(f'Sorry to see you go. But that means you got fully vaccinated, right? 💉💪')
 
-  def _dispatch(self, name: str, slot: SlotResponse) -> None:
-    print('@@@ dispatching', name, slot)
-    with model.session() as session:
-      for reg in session.query(model.UserRegistration):
-        print(reg.id, reg.first_name, reg.chat_id)
-        self._updater.bot.send_message(
-          chat_id=reg.chat_id,
-          text=f'{reg.first_name}, looks like I found an open slot for <b>{name}</b>.\n\n<pre><code>{html.escape(slot.content)}</code></pre>',
-          parse_mode=ParseMode.HTML,
-        )
-
-  def _dispatch_exception(self) -> None:
-    chat_id = 56970700
-    self._updater.bot.send_message(
-      chat_id=chat_id,
-      text=f'<pre><code>{html.escape(traceback.format_exc())}</code></pre>',
-      parse_mode=ParseMode.HTML
-    )
-
-  def _check_slots(self):
-    logger.info('Begin slot checker thread')
-    while True:
-      for checker in self._slotcheckers:
-        try:
-          logger.info('Checking slots for %s', checker.get_description())
-          slot = checker.check_available_slots()
-        except Exception:
-          logger.exception('Error when checking slots for %s', checker.get_description())
-          self._dispatch_exception()
-        else:
-          if slot is not None:
-            logger.info('Found open slot for %s', checker.get_description())
-            self._dispatch(checker.get_description(), slot)
-      self._last_check_at = datetime.datetime.now()
-      time.sleep(60 * 5)  # Run every five minutes
-
   def main(self):
-    thread = threading.Thread(target=self._check_slots)
+    thread = threading.Thread(target=self._check_availability_worker, daemon=True)
     thread.start()
     self._updater.start_polling()
     self._updater.idle()
@@ -95,10 +116,9 @@ class Impfbot:
 
 def main():
   logging.basicConfig(level=logging.INFO)
-  with open('creds.txt') as fp:
-    token = fp.read().strip()
-  model.init_engine("sqlite+pysqlite:///test.db")
-  bot = Impfbot(token, DachauMedSlotChecker.all_offices())
+  config = Config.load('config.yml')
+  model.init_engine(config.database_spec)
+  bot = Impfbot(config)
   bot.main()
 
 

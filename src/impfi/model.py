@@ -22,4 +22,3 @@ class UserRegistration(Base):
   id = Column(Integer, primary_key=True)
   first_name = Column(String)
   chat_id = Column(Integer)
-

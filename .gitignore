@@ -1,8 +1,9 @@
 .venv*/
+.vscode/
 dist/
 build/
 *.py[cod]
 *.egg-info
 *.egg
-creds.txt
-test.db
+config.yml
+impfi.db

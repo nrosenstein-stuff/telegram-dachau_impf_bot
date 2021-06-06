@@ -19,6 +19,9 @@ requirements = [
   'sqlalchemy',
   'python-telegram-bot',
   'requests',
+  'bs4 >=0.0.1,<1.0.0',
+  'databind.core >=0.11.0,<1.0.0',
+  'databind.yaml >=0.1.3,<1.0.0',
 ]
 
 setuptools.setup(
@@ -39,7 +42,11 @@ setuptools.setup(
   tests_require = [],
   python_requires = '>=3.5.0,<4.0.0',
   data_files = [],
-  entry_points = {},
+  entry_points = {
+    'impfi.api.IPlugin': [
+      'dachau = impfi.contrib.de.bavaria.dachau:DachauMedPlugin',
+    ]
+  },
   cmdclass = {},
   keywords = [],
   classifiers = [],
