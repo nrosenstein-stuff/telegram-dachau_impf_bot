@@ -1,0 +1,8 @@
+.venv*/
+dist/
+build/
+*.py[cod]
+*.egg-info
+*.egg
+creds.txt
+test.db
