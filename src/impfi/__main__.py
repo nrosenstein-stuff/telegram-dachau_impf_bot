@@ -64,7 +64,7 @@ class Impfbot:
   def _check_availability_worker(self):
     while True:
       for vaccination_center in self._centers:
-        logger.info('Checking availability of %s', vaccination_center.uid)
+        logger.info('Checking availability of %s (%s)', vaccination_center.uid, vaccination_center.name)
         try:
           availability = vaccination_center.check_availability()
         except Exception:

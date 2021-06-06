@@ -39,7 +39,7 @@ def _get_vaccination_centers_for(url: str, vaccine_type: VaccineType) -> t.List[
   extra_data_json_payload = salon_extra.string.partition('=')[2].strip().rstrip(';')
   extra_data = json.loads(extra_data_json_payload)
 
-  result: t.List[IVaccinationCenter] = []
+  result: t.List[DachauMedVaccinationCenter] = []
   for shop in shops:
     result.append(DachauMedVaccinationCenter(
       vaccine_type, shop['name'], shop['id'], url, extra_data['ajax_url'],
@@ -50,7 +50,7 @@ def _get_vaccination_centers_for(url: str, vaccine_type: VaccineType) -> t.List[
 
 class DachauMedPlugin(IPlugin):
 
-  def get_vaccination_centers(self) -> t.List['IVaccinationCenter']:
+  def get_vaccination_centers(self) -> t.Sequence['IVaccinationCenter']:
     return _get_vaccination_centers_for(ASTRA_URL, VaccineType.AstraZeneca) + \
       _get_vaccination_centers_for(JNJ_URL, VaccineType.JohnsonAndJohnson)
 

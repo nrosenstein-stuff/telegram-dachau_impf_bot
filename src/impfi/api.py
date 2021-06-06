@@ -16,7 +16,7 @@ class VaccineType(enum.Enum):
 class IPlugin(metaclass=abc.ABCMeta):
 
   @abc.abstractmethod
-  def get_vaccination_centers(self) -> t.List['IVaccinationCenter']: ...
+  def get_vaccination_centers(self) -> t.Sequence['IVaccinationCenter']: ...
 
   @staticmethod
   def load_plugins() -> t.List['IPlugin']:
