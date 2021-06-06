@@ -21,6 +21,7 @@ class Config:
   token: str
   admin_chat_id: int = 56970700  # Niklas R. <-> Impfi Bot
   database_spec: str = 'sqlite+pysqlite:///impfi.db'
+  check_period: int = 20  # minutes
 
   @classmethod
   def load(cls, filename: str) -> 'Config':
@@ -75,7 +76,7 @@ class Impfbot:
             for vaccine_type, info in availability.items():
               self._dispatch(vaccination_center.name, vaccination_center.url, vaccine_type, availability.dates)
       self._last_check_at = datetime.datetime.now()
-      time.sleep(60 * 5)  # Run every five minutes
+      time.sleep(60 * self._config.check_period)  # Run every five minutes
 
   def _status(self, update: telegram.Update, context: telegram.ext.CallbackContext) -> None:
     assert update.message
