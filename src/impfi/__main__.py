@@ -73,10 +73,10 @@ class Impfbot:
             logger.exception('Error while checking availability of %s', vaccination_center.uid)
             self._dispatch_to_admin(f'Error in {vaccination_center.uid}', code=traceback.print_exc())
           else:
-            if availability is not None:
+            if availability:
               logger.info('Detected availability for %s: %s', vaccination_center.name, vaccination_center.check_availability())
-              for vaccine_type, info in availability.items():
-                self._dispatch(vaccination_center.name, vaccination_center.url, vaccine_type, availability.dates)
+            for vaccine_type, info in availability.items():
+              self._dispatch(vaccination_center.name, vaccination_center.url, vaccine_type, availability.dates)
         self._last_check_at = datetime.datetime.now()
       except:
         logger.exception('Error in _check_availability_worker')
