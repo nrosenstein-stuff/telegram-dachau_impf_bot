@@ -34,7 +34,7 @@ class Impfbot:
   def __init__(self, config: Config) -> None:
     self._config = config
     self._centers = reduce(
-      lambda a, b: a + b.get_vaccination_centers(), api.IPlugin.load_plugins(),
+      lambda a, b: a + list(b.get_vaccination_centers()), api.IPlugin.load_plugins(),
       t.cast(t.List[api.IVaccinationCenter], []))
     self._updater = telegram.ext.Updater(config.token)
     self._updater.dispatcher.add_handler(telegram.ext.CommandHandler('status', self._status))
@@ -64,18 +64,23 @@ class Impfbot:
 
   def _check_availability_worker(self):
     while True:
-      for vaccination_center in self._centers:
-        logger.info('Checking availability of %s (%s)', vaccination_center.uid, vaccination_center.name)
-        try:
-          availability = vaccination_center.check_availability()
-        except Exception:
-          logger.exception('Error while checking availability of %s', vaccination_center.uid)
-          self._dispatch_to_admin(f'Error in {vaccination_center.uid}', code=traceback.print_exc())
-        else:
-          if availability is not None:
-            for vaccine_type, info in availability.items():
-              self._dispatch(vaccination_center.name, vaccination_center.url, vaccine_type, availability.dates)
-      self._last_check_at = datetime.datetime.now()
+      try:
+        for vaccination_center in self._centers:
+          logger.info('Checking availability of %s (%s)', vaccination_center.uid, vaccination_center.name)
+          try:
+            availability = vaccination_center.check_availability()
+          except Exception:
+            logger.exception('Error while checking availability of %s', vaccination_center.uid)
+            self._dispatch_to_admin(f'Error in {vaccination_center.uid}', code=traceback.print_exc())
+          else:
+            if availability is not None:
+              logger.info('Detected availability for %s: %s', vaccination_center.name, vaccination_center.check_availability())
+              for vaccine_type, info in availability.items():
+                self._dispatch(vaccination_center.name, vaccination_center.url, vaccine_type, availability.dates)
+        self._last_check_at = datetime.datetime.now()
+      except:
+        logger.exception('Error in _check_availability_worker')
+        self._dispatch_to_admin('Error in _check_availability_worker', code=traceback.format_exc())
       time.sleep(60 * self._config.check_period)  # Run every five minutes
 
   def _status(self, update: telegram.Update, context: telegram.ext.CallbackContext) -> None:

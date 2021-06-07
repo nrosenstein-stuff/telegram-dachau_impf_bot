@@ -66,11 +66,11 @@ class DachauMedVaccinationCenter(IVaccinationCenter):
   ajax_none: str
 
   @property
-  def uid(self) -> str:
+  def uid(self) -> str:  # type: ignore
     return f'{__name__}:{self.vaccine_type.name}:{self.salon_id}'
 
   @property
-  def location(self) -> str:
+  def location(self) -> str:  # type: ignore
     return 'Germany, Bavaria, Landkreis Dachau'
 
   def check_availability(self) -> t.Dict[VaccineType, AvailabilityInfo]:
@@ -92,4 +92,4 @@ class DachauMedVaccinationCenter(IVaccinationCenter):
     data_node = soup.find(lambda t: 'data-intervals' in t.attrs)
     intervals = json.loads(data_node.attrs['data-intervals'])
     dates = [datetime.datetime.strptime(d, '%Y-%m-%d').date() for d in intervals['dates']]
-    return AvailabilityInfo(dates=dates, not_available_until=None)
+    return {self.vaccine_type: AvailabilityInfo(dates=dates, not_available_until=None)}
