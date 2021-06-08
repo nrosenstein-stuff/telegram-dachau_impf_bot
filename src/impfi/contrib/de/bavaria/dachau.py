@@ -5,7 +5,7 @@ Bavaria, DE that can be viewed at https://termin.dachau-med.de/impfungen01/ and
 https://termin.dachau-med.de/impfungen02/.
 """
 
-import bs4
+import bs4  # type: ignore
 import datetime
 import json
 import requests
