@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from databind import yaml
 from functools import reduce
 from impfbot import api, model
+from impfbot.text import Text
 from telegram.parsemode import ParseMode
 
 logger = logging.getLogger(__name__)
@@ -58,8 +59,11 @@ class Impfbot:
       for reg in session.query(model.UserRegistration):
         self._updater.bot.send_message(
           chat_id=reg.chat_id,
-          text=f'Slots for {vaccine_type.name} are available at <a href="{url}">{name}</a> '\
-            'for the following dates: ' + ', '.join(d.strftime('%Y-%m-%d') for d in dates),
+          text=Text.SLOT_AVAILABLE(
+            vaccine_name=vaccine_type.name,
+            link=url,
+            location=name,
+            dates=', '.join(d.strftime('%Y-%m-%d') for d in dates)),
           parse_mode=ParseMode.HTML,
         )
 
@@ -95,11 +99,11 @@ class Impfbot:
     with model.session() as session:
       has_user = session.query(model.UserRegistration).filter(model.UserRegistration.id == user.id).first()
       if has_user:
-        update.message.reply_markdown(f'You\'re already registered.')
+        update.message.reply_markdown(Text.SUBSCRIBE_DUPLICATE(first_name=user.first_name))
         return
       session.add(model.UserRegistration(id=user.id, first_name=user.first_name, chat_id=update.message.chat_id))
       session.commit()
-      update.message.reply_markdown(f'Hey **{user.first_name}**, welcome to the crew. 💉💪')
+      update.message.reply_markdown(Text.SUBSCRIBE_OK(first_name=user.first_name))
 
   def _unregister(self, update: telegram.Update, context: telegram.ext.CallbackContext) -> None:
     assert update.message
@@ -108,11 +112,11 @@ class Impfbot:
     with model.session() as session:
       has_user = session.query(model.UserRegistration).filter(model.UserRegistration.id == user.id).first()
       if not has_user:
-        update.message.reply_markdown(f'You\'re not currently registered.')
+        update.message.reply_markdown(Text.UNSUBSCRIBE_ENOENT(first_name=user.first_name))
         return
       session.delete(has_user)
       session.commit()
-      update.message.reply_markdown(f'Sorry to see you go. But that means you got fully vaccinated, right? 💉💪')
+      update.message.reply_markdown(Text.UNSUBSCRIBE_OK(first_name=user.first_name))
 
   def main(self):
     thread = threading.Thread(target=self._check_availability_worker, daemon=True)
