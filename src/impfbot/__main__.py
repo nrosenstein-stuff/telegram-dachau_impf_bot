@@ -90,7 +90,11 @@ class Impfbot:
 
   def _status(self, update: telegram.Update, context: telegram.ext.CallbackContext) -> None:
     assert update.message
-    update.message.reply_markdown(f'Last check at: {self._last_check_at}')
+    if self._last_check_at:
+      message = f'Impftermine wurden zuletzt geprüft um {self._last_check_at.strftime("%H:%M Uhr (%Y-%m-%d)")}.'
+    else:
+      message = f'Impftermine wurden noch nicht geprüft.'
+    update.message.reply_markdown(message)
 
   def _register(self, update: telegram.Update, context: telegram.ext.CallbackContext) -> None:
     assert update.message
