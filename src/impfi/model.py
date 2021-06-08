@@ -1,6 +1,7 @@
 
-from sqlalchemy import create_engine, Column, Integer, String  # type: ignore
-from sqlalchemy.orm import declarative_base, Session  # type: ignore
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.orm.session import Session, SessionTransaction
+from sqlalchemy.ext.declarative import declarative_base
 
 engine = None
 Base = declarative_base()
@@ -12,8 +13,8 @@ def init_engine(spec: str) -> None:
   Base.metadata.create_all(engine)
 
 
-def session() -> Session:
-  return Session(bind=engine)
+def session() -> SessionTransaction:
+  return Session(bind=engine).begin()
 
 
 class UserRegistration(Base):
