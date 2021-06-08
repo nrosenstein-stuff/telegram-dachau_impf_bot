@@ -11,7 +11,7 @@ import json
 import requests
 import typing as t
 from dataclasses import dataclass
-from impfi.api import AvailabilityInfo, IPlugin, IVaccinationCenter, VaccineType
+from impfbot.api import AvailabilityInfo, IPlugin, IVaccinationCenter, VaccineType
 
 ASTRA_URL = 'https://termin.dachau-med.de/impfungen01/'
 JNJ_URL = 'https://termin.dachau-med.de/impfungen02/'

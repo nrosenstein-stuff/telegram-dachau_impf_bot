@@ -1,4 +1,6 @@
 
+import contextlib
+import typing as t
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm.session import Session, SessionTransaction
 from sqlalchemy.ext.declarative import declarative_base
@@ -13,8 +15,11 @@ def init_engine(spec: str) -> None:
   Base.metadata.create_all(engine)
 
 
-def session() -> SessionTransaction:
-  return Session(bind=engine).begin()
+@contextlib.contextmanager
+def session() -> t.Iterator[Session]:
+  s = Session(bind=engine)
+  with s.begin():
+    yield s
 
 
 class UserRegistration(Base):

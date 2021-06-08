@@ -6,4 +6,4 @@ build/
 *.egg-info
 *.egg
 config.yml
-impfi.db
+impfbot.db

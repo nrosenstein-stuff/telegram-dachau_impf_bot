@@ -21,7 +21,7 @@ class IPlugin(metaclass=abc.ABCMeta):
   @staticmethod
   def load_plugins() -> t.List['IPlugin']:
     result = []
-    for ep in pkg_resources.iter_entry_points('impfi.api.IPlugin'):
+    for ep in pkg_resources.iter_entry_points('impfbot.api.IPlugin'):
       result.append(ep.load()())
     return result
 

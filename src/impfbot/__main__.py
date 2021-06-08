@@ -10,7 +10,7 @@ import typing as t
 from dataclasses import dataclass
 from databind import yaml
 from functools import reduce
-from impfi import api, model
+from impfbot import api, model
 from telegram.parsemode import ParseMode
 
 logger = logging.getLogger(__name__)
@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Config:
   token: str
-  admin_chat_id: int = 56970700  # Niklas R. <-> Impfi Bot
-  database_spec: str = 'sqlite+pysqlite:///impfi.db'
+  admin_chat_id: int = 56970700  # Niklas R. <-> impfbot Bot
+  database_spec: str = 'sqlite+pysqlite:///impfbot.db'
   check_period: int = 20  # minutes
 
   @classmethod
@@ -37,9 +37,10 @@ class Impfbot:
       lambda a, b: a + list(b.get_vaccination_centers()), api.IPlugin.load_plugins(),
       t.cast(t.List[api.IVaccinationCenter], []))
     self._updater = telegram.ext.Updater(config.token)
+    self._updater.dispatcher.bot_data
     self._updater.dispatcher.add_handler(telegram.ext.CommandHandler('status', self._status))
-    self._updater.dispatcher.add_handler(telegram.ext.CommandHandler('register', self._register))
-    self._updater.dispatcher.add_handler(telegram.ext.CommandHandler('unregister', self._unregister))
+    self._updater.dispatcher.add_handler(telegram.ext.CommandHandler('anmelden', self._register))
+    self._updater.dispatcher.add_handler(telegram.ext.CommandHandler('abmelden', self._unregister))
     self._last_check_at: t.Optional[datetime.datetime] = None
 
   def _dispatch_to_admin(self, message: str, code: t.Optional[str] = None) -> None:

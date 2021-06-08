@@ -25,7 +25,7 @@ requirements = [
 ]
 
 setuptools.setup(
-  name = 'impfi',
+  name = 'impfbot',
   version = '0.0.0',
   author = 'Niklas Rosenstein',
   author_email = 'rosensteinniklas@gmail.com',
@@ -43,8 +43,8 @@ setuptools.setup(
   python_requires = '>=3.5.0,<4.0.0',
   data_files = [],
   entry_points = {
-    'impfi.api.IPlugin': [
-      'dachau = impfi.contrib.de.bavaria.dachau:DachauMedPlugin',
+    'impfbot.api.IPlugin': [
+      'dachau = impfbot.contrib.de.bavaria.dachau:DachauMedPlugin',
     ]
   },
   cmdclass = {},
