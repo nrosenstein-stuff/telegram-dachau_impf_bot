@@ -15,6 +15,7 @@ from impfbot.api import AvailabilityInfo, IPlugin, IVaccinationCenter, VaccineTy
 
 ASTRA_URL = 'https://termin.dachau-med.de/impfungen01/'
 JNJ_URL = 'https://termin.dachau-med.de/impfungen02/'
+BIONTECH_URL = 'https://termin.dachau-med.de/impfungen03/'
 
 
 def _parse_html(html: str) -> bs4.BeautifulSoup:
@@ -52,7 +53,8 @@ class DachauMedPlugin(IPlugin):
 
   def get_vaccination_centers(self) -> t.Sequence['IVaccinationCenter']:
     #return _get_vaccination_centers_for(ASTRA_URL, VaccineType.AstraZeneca) + \
-    return _get_vaccination_centers_for(JNJ_URL, VaccineType.JohnsonAndJohnson)
+    #return _get_vaccination_centers_for(JNJ_URL, VaccineType.JohnsonAndJohnson) + \
+    return   _get_vaccination_centers_for(BIONTECH_URL, VaccineType.Biontech)
 
 
 @dataclass

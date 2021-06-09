@@ -16,7 +16,7 @@ class Text(enum.Enum):
 
 
 GERMAN = {
-  Text.SUBSCRIBE_OK: 'Hallo {first_name}, ich werde dir Bescheid geben sobald Impftermine verfügbar sind.',
+  Text.SUBSCRIBE_OK: 'Hallo {first_name}, ich werde dir Bescheid geben sobald Impftermine verfügbar sind. Sende mir eine Nachricht mit "/abmelden" um keine Benachrichtigungen mehr zu erhalten.',
   Text.SUBSCRIBE_DUPLICATE: 'Du bist bereits angemeldet.',
   Text.UNSUBSCRIBE_OK: '{first_name}, ich werde dir keine Benachrichtigungen mehr senden.',
   Text.UNSUBSCRIBE_ENOENT: 'Du bist bereits abgemeldet or warst nie angemeldet.',

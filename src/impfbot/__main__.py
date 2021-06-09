@@ -40,6 +40,7 @@ class Impfbot:
     self._updater = telegram.ext.Updater(config.token)
     self._updater.dispatcher.bot_data
     self._updater.dispatcher.add_handler(telegram.ext.CommandHandler('status', self._status))
+    self._updater.dispatcher.add_handler(telegram.ext.CommandHandler('start', self._register))
     self._updater.dispatcher.add_handler(telegram.ext.CommandHandler('anmelden', self._register))
     self._updater.dispatcher.add_handler(telegram.ext.CommandHandler('abmelden', self._unregister))
     self._last_check_at: t.Optional[datetime.datetime] = None
