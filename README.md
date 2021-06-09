@@ -27,7 +27,7 @@ the user instead of sending them any and all available slots as is the case righ
 ```
 anmelden - Erhalte Benachrichtigungen zu verfügbaren Impfterminen.
 abmelden - Erhalte keine Benachrichtigungen mehr.
-status - Zeige an, wann der Bot das letzte mal die Termine geprüft hat.
+status - Zeige die aktuell Verfügbaren Daten an, an denen Termine frei sind (wird alle 20 Minuten erneuert).
 ```
 
 ---
