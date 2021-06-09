@@ -4,7 +4,7 @@ import enum
 import datetime
 import pkg_resources
 import typing as t
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 class VaccineType(enum.Enum):
@@ -41,7 +41,7 @@ class IVaccinationCenter(metaclass=abc.ABCMeta):
 class AvailabilityInfo:
 
   #: A list of dates that have at least one available slot.
-  dates: t.List[datetime.date]
+  dates: t.List[datetime.date] = field(default_factory=list)
 
   #: A date for which new appointments may be available again soon.
-  not_available_until: t.Optional[datetime.date]
+  not_available_until: t.Optional[datetime.date] = None

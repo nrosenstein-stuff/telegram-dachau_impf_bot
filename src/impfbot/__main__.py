@@ -54,11 +54,15 @@ class Impfbot:
       parse_mode=ParseMode.HTML
     )
 
-  def _dispatch(self, name: str, url: str, vaccine_type: api.VaccineType, dates: t.List[datetime.date]) -> None:
+  def _dispatch(self, name: str, url: str, vaccine_type: api.VaccineType, dates: t.List[datetime.date], recipient_chat_id: t.Optional[int] = None) -> None:
     with model.session() as session:
-      for reg in session.query(model.UserRegistration):
+      if recipient_chat_id is not None:
+        chat_ids = [recipient_chat_id]
+      else:
+        chat_ids = (x.chat_id for x in session.query(model.UserRegistration))
+      for chat_id in chat_ids:
         self._updater.bot.send_message(
-          chat_id=reg.chat_id,
+          chat_id=chat_id,
           text=Text.SLOT_AVAILABLE(
             vaccine_name=vaccine_type.name,
             link=url,
@@ -80,8 +84,12 @@ class Impfbot:
           else:
             if availability:
               logger.info('Detected availability for %s: %s', vaccination_center.name, vaccination_center.check_availability())
-            for vaccine_type, info in availability.items():
-              self._dispatch(vaccination_center.name, vaccination_center.url, vaccine_type, info.dates)
+            with model.session() as session:
+              for vaccine_type in api.VaccineType:
+                info = availability.get(vaccine_type, api.AvailabilityInfo())
+                changed = model.VaccinationCenterByType.save(session, vaccination_center.uid, vaccine_type, info)
+                if info.dates:
+                  self._dispatch(vaccination_center.name, vaccination_center.url, vaccine_type, info.dates)
         self._last_check_at = datetime.datetime.now()
       except:
         logger.exception('Error in _check_availability_worker')
@@ -90,11 +98,19 @@ class Impfbot:
 
   def _status(self, update: telegram.Update, context: telegram.ext.CallbackContext) -> None:
     assert update.message
-    if self._last_check_at:
-      message = f'Impftermine wurden zuletzt geprüft um {self._last_check_at.strftime("%H:%M Uhr (%Y-%m-%d)")}.'
-    else:
-      message = f'Impftermine wurden noch nicht geprüft.'
-    update.message.reply_markdown(message)
+    at_least_one_result = False
+    with model.session() as session:
+      for center in session.query(model.VaccinationCenterByType):
+        if center.num_available_dates <= 0: continue
+        at_least_one_result = True
+        vaccine_type, info = center.availability_info()
+        center_data = next((x for x in self._centers if x.uid == center.id), None)
+        if not center_data:
+          logger.warn('Could not find name for center with id %s', center.id)
+          continue
+        self._dispatch(center_data.name, center_data.url, vaccine_type, info.dates, recipient_chat_id=update.message.chat_id)
+    if not at_least_one_result:
+      update.message.reply_markdown(Text.NO_SLOTS_AVAILABLE())
 
   def _register(self, update: telegram.Update, context: telegram.ext.CallbackContext) -> None:
     assert update.message
@@ -108,6 +124,7 @@ class Impfbot:
       session.add(model.UserRegistration(id=user.id, first_name=user.first_name, chat_id=update.message.chat_id))
       session.commit()
       update.message.reply_markdown(Text.SUBSCRIBE_OK(first_name=user.first_name))
+      self._status(update, context)
 
   def _unregister(self, update: telegram.Update, context: telegram.ext.CallbackContext) -> None:
     assert update.message
