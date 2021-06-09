@@ -51,8 +51,8 @@ def _get_vaccination_centers_for(url: str, vaccine_type: VaccineType) -> t.List[
 class DachauMedPlugin(IPlugin):
 
   def get_vaccination_centers(self) -> t.Sequence['IVaccinationCenter']:
-    return _get_vaccination_centers_for(ASTRA_URL, VaccineType.AstraZeneca) + \
-      _get_vaccination_centers_for(JNJ_URL, VaccineType.JohnsonAndJohnson)
+    #return _get_vaccination_centers_for(ASTRA_URL, VaccineType.AstraZeneca) + \
+    return _get_vaccination_centers_for(JNJ_URL, VaccineType.JohnsonAndJohnson)
 
 
 @dataclass
