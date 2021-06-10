@@ -23,6 +23,7 @@ class Config:
   admin_chat_id: int = 56970700  # Niklas R. <-> impfbot Bot
   database_spec: str = 'sqlite+pysqlite:///impfbot.db'
   check_period: int = 20  # minutes
+  log_format: str = '[%(asctime)s - %(levelname)s - %(name)s]: %(message)s'
 
   @classmethod
   def load(cls, filename: str) -> 'Config':
@@ -89,8 +90,10 @@ class Impfbot:
               for vaccine_type in api.VaccineType:
                 info = availability.get(vaccine_type, api.AvailabilityInfo())
                 changed = model.VaccinationCenterByType.save(session, vaccination_center.uid, vaccine_type, info)
-                if info.dates:
+                if changed and info.dates:
                   self._dispatch(vaccination_center.name, vaccination_center.url, vaccine_type, info.dates)
+                elif not changed and info.dates:
+                  logger.info('Skipped sending notification because the dates did not change.')
         self._last_check_at = datetime.datetime.now()
       except:
         logger.exception('Error in _check_availability_worker')
@@ -148,8 +151,8 @@ class Impfbot:
 
 
 def main():
-  logging.basicConfig(level=logging.INFO)
   config = Config.load('config.yml')
+  logging.basicConfig(level=logging.INFO, format=config.log_format)
   model.init_engine(config.database_spec)
   bot = Impfbot(config)
   bot.main()
