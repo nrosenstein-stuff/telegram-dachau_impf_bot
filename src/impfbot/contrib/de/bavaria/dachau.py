@@ -92,6 +92,10 @@ class DachauMedVaccinationCenter(IVaccinationCenter):
     content = response.json()['content']
     soup = bs4.BeautifulSoup(content, features='html.parser')
     data_node = soup.find(lambda t: 'data-intervals' in t.attrs)
+    if not data_node:
+      with open('tmp.txt', 'w') as fp:
+        fp.write(content)
+      raise ValueError(f'Could not find node with data-intervals')
     intervals = json.loads(data_node.attrs['data-intervals'])
     dates = [datetime.datetime.strptime(d, '%Y-%m-%d').date() for d in intervals['dates']]
     return {self.vaccine_type: AvailabilityInfo(dates=dates, not_available_until=None)}
