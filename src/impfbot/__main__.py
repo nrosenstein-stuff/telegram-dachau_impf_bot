@@ -59,19 +59,22 @@ class Impfbot:
   def _dispatch(self, name: str, url: str, vaccine_type: api.VaccineType, dates: t.List[datetime.date], recipient_chat_id: t.Optional[int] = None) -> None:
     with model.session() as session:
       if recipient_chat_id is not None:
-        chat_ids = [recipient_chat_id]
+        chat_ids: t.Iterable[int] = [recipient_chat_id]
       else:
         chat_ids = (x.chat_id for x in session.query(model.UserRegistration))
       for chat_id in chat_ids:
-        self._updater.bot.send_message(
-          chat_id=chat_id,
-          text=Text.SLOT_AVAILABLE(
-            vaccine_name=vaccine_type.name,
-            link=url,
-            location=name,
-            dates=', '.join(d.strftime('%Y-%m-%d') for d in dates)),
-          parse_mode=ParseMode.HTML,
-        )
+        try:
+          self._updater.bot.send_message(
+            chat_id=chat_id,
+            text=Text.SLOT_AVAILABLE(
+              vaccine_name=vaccine_type.name,
+              link=url,
+              location=name,
+              dates=', '.join(d.strftime('%Y-%m-%d') for d in dates)),
+            parse_mode=ParseMode.HTML,
+          )
+        except telegram.error.TelegramError as exc:
+          logger.exception('An error occurred when sending message to chat_id %s', chat_id)
 
   def _check_availability_worker(self) -> None:
     while True:
