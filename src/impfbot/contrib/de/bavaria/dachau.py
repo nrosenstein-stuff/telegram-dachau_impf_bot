@@ -7,11 +7,14 @@ https://termin.dachau-med.de/impfungen02/.
 
 import bs4  # type: ignore
 import datetime
+import logging
 import json
 import requests
 import typing as t
 from dataclasses import dataclass
 from impfbot.api import AvailabilityInfo, IPlugin, IVaccinationCenter, VaccineType
+
+logger = logging.getLogger(__name__)
 
 ASTRA_URL = 'https://termin.dachau-med.de/impfungen01/'
 JNJ_URL = 'https://termin.dachau-med.de/impfungen02/'
@@ -93,9 +96,8 @@ class DachauMedVaccinationCenter(IVaccinationCenter):
     soup = bs4.BeautifulSoup(content, features='html.parser')
     data_node = soup.find(lambda t: 'data-intervals' in t.attrs)
     if not data_node:
-      with open('tmp.txt', 'w') as fp:
-        fp.write(content)
-      raise ValueError(f'Could not find node with data-intervals')
+      logger.error('Unable to find node with data-intervals attribute in page.\n\n%s\n', content)
+      return {}
     intervals = json.loads(data_node.attrs['data-intervals'])
     dates = [datetime.datetime.strptime(d, '%Y-%m-%d').date() for d in intervals['dates']]
     return {self.vaccine_type: AvailabilityInfo(dates=dates, not_available_until=None)}
