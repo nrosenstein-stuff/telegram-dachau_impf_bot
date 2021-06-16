@@ -31,7 +31,7 @@ class UserRegistration(Base):
   __tablename__ = 'user_registration'
   id = Column(Integer, primary_key=True)
   first_name = Column(String)
-  chat_id = Column(Integer)
+  chat_id = Column(Integer, nullable=False)
 
 
 class VaccinationCenterByType(Base):
