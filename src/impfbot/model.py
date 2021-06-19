@@ -42,6 +42,13 @@ class SchemaVersion(Base):
   def get(session: Session) -> int:
     versions = list(session.query(SchemaVersion).all())
     if not versions:
+      if not all(map(list, (
+        session.query(UserRegistration).all(),
+        session.query(VaccinationCenterByType).all(),
+        session.query(AvailableDay).all(),
+      ))):
+        session.add(SchemaVersion(version=CURRENT_VERSION))
+        return CURRENT_VERSION  # Fresh install
       return 1  # That's when we didn't store the schema version
     elif len(versions) == 1:
       return versions[0].version
