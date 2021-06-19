@@ -49,7 +49,7 @@ GERMAN = {
   Text.UNSUBSCRIBE_ENOENT: 'Du bist bereits abgemeldet or warst nie angemeldet.',
   Text.SLOT_AVAILABLE: 'Ich habe soeben folgende Termine für <b>{vaccine_name}</b> bei <a href="{link}">{location}</a> gefunden:\n\n{dates}',
   Text.SLOT_AVAILABLE_RETRO: '<b>{vaccine_name}</b> bei <a href="{link}">{location}</a>:{dates}',
-  Text.AVAILABLE_SLOTS_HEADER: 'Zuletzt bekannte Impftermine (Verfügbarkeit kann sich in der Zwischenzeit geändert haben):',
+  Text.AVAILABLE_SLOTS_HEADER: 'Zuletzt bekannte Impftermine (Verfügbarkeit kann sich in der Zwischenzeit geändert haben): {dates}',
   Text.NO_SLOTS_AVAILABLE: 'Momentan sind keine Impftermine verfügbar.',
   Text.ROUND_ANY: '(allg. Impfung)',
   Text.ROUND_1: '1. Impfung',
