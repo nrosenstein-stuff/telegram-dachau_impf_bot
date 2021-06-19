@@ -56,18 +56,26 @@ class Impfbot:
       parse_mode=ParseMode.HTML
     )
 
-  def _dispatch(self, name: str, url: str, vaccine_type: api.VaccineType, dates: t.List[datetime.date], recipient_chat_id: t.Optional[int] = None) -> None:
+  def _dispatch(self,
+    name: str,
+    url: str,
+    vaccine_round: api.VaccineRound,
+    dates: t.List[datetime.date],
+    recipient_chat_id: t.Optional[int] = None,
+    is_retro: bool = False
+  ) -> None:
+
     with model.session() as session:
       if recipient_chat_id is not None:
         chat_ids: t.Iterable[int] = [recipient_chat_id]
       else:
-        chat_ids = (x.chat_id for x in session.query(model.UserRegistration))
+        chat_ids = (x.chat_id for x in session.query(model.UserRegistration) if x.subscription_active)
       for chat_id in chat_ids:
         try:
           self._updater.bot.send_message(
             chat_id=chat_id,
-            text=Text.SLOT_AVAILABLE(
-              vaccine_name=vaccine_type.name,
+            text=(Text.SLOT_AVAILABLE_RETRO if is_retro else Text.SLOT_AVAILABLE)(
+              vaccine_name=Text.of_vaccine_round(vaccine_round),
               link=url,
               location=name,
               dates=', '.join(d.strftime('%Y-%m-%d') for d in dates)),
@@ -90,18 +98,31 @@ class Impfbot:
             if availability:
               logger.info('Detected availability for %s: %s', vaccination_center.name, vaccination_center.check_availability())
             with model.session() as session:
-              for vaccine_type in api.VaccineType:
-                info = availability.get(vaccine_type, api.AvailabilityInfo())
-                changed = model.VaccinationCenterByType.save(session, vaccination_center.uid, vaccine_type, info)
-                if changed and info.dates:
-                  self._dispatch(vaccination_center.name, vaccination_center.url, vaccine_type, info.dates)
-                elif not changed and info.dates:
-                  logger.info('Skipped sending notification because the dates did not change.')
+              self._save_available_dates_and_dispatch(session, vaccination_center, availability)
         self._last_check_at = datetime.datetime.now()
       except:
         logger.exception('Error in _check_availability_worker')
         self._dispatch_to_admin('Error in _check_availability_worker', code=traceback.format_exc())
       time.sleep(60 * self._config.check_period)  # Run every five minutes
+
+  def _save_available_dates_and_dispatch(self,
+    session: model.Session,
+    vaccination_center: api.IVaccinationCenter,
+    availability: t.Dict[api.VaccineRound, api.AvailabilityInfo]
+  ) -> None:
+
+    known_rounds: t.Set[api.VaccineRound] = set()
+    for center in session.query(model.VaccinationCenterByType).all():
+      known_rounds.add(center.get_vaccine_round())
+    known_rounds.update(availability.keys())
+
+    for vaccine_round in known_rounds:
+      info = availability.get(vaccine_round, api.AvailabilityInfo())
+      changed = model.VaccinationCenterByType.save(session, vaccination_center.uid, vaccine_round, info)
+      if changed and info.dates:
+        self._dispatch(vaccination_center.name, vaccination_center.url, vaccine_round, info.dates)
+      elif not changed and info.dates:
+        logger.info('Skipped sending notification because the dates did not change.')
 
   def _status(self, update: telegram.Update, context: telegram.ext.CallbackContext) -> None:
     assert update.message
@@ -109,13 +130,21 @@ class Impfbot:
     with model.session() as session:
       for center in session.query(model.VaccinationCenterByType):
         if center.num_available_dates <= 0: continue
+        if not at_least_one_result:
+          update.message.reply_markdown(Text.AVAILABLE_SLOTS_HEADER())
         at_least_one_result = True
         vaccine_type, info = center.availability_info()
         center_data = next((x for x in self._centers if x.uid == center.id), None)
         if not center_data:
           logger.warn('Could not find name for center with id %s', center.id)
           continue
-        self._dispatch(center_data.name, center_data.url, vaccine_type, info.dates, recipient_chat_id=update.message.chat_id)
+        self._dispatch(
+          center_data.name,
+          center_data.url,
+          vaccine_type,
+          info.dates,
+          recipient_chat_id=update.message.chat_id,
+          is_retro=True)
     if not at_least_one_result:
       update.message.reply_markdown(Text.NO_SLOTS_AVAILABLE())
 
@@ -125,10 +154,18 @@ class Impfbot:
     assert user
     with model.session() as session:
       has_user = session.query(model.UserRegistration).filter(model.UserRegistration.id == user.id).first()
-      if has_user:
+      if has_user and has_user.subscription_active:
         update.message.reply_markdown(Text.SUBSCRIBE_DUPLICATE(first_name=user.first_name))
         return
-      session.add(model.UserRegistration(id=user.id, first_name=user.first_name, chat_id=update.message.chat_id))
+      if has_user:
+        has_user.subscription_active = True
+      else:
+        session.add(model.UserRegistration(
+          id=user.id,
+          first_name=user.first_name,
+          chat_id=update.message.chat_id,
+          subscription_active=True,
+          registered_at=datetime.datetime.now()))
       session.commit()
       update.message.reply_markdown(Text.SUBSCRIBE_OK(first_name=user.first_name))
       self._status(update, context)
@@ -142,7 +179,7 @@ class Impfbot:
       if not has_user:
         update.message.reply_markdown(Text.UNSUBSCRIBE_ENOENT(first_name=user.first_name))
         return
-      session.delete(has_user)
+      has_user.subscription_active = False
       session.commit()
       update.message.reply_markdown(Text.UNSUBSCRIBE_OK(first_name=user.first_name))
 

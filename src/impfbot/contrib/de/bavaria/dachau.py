@@ -12,20 +12,26 @@ import json
 import requests
 import typing as t
 from dataclasses import dataclass
-from impfbot.api import AvailabilityInfo, IPlugin, IVaccinationCenter, VaccineType
+from impfbot.api import AvailabilityInfo, IPlugin, IVaccinationCenter, VaccineRound, VaccineType
 
 logger = logging.getLogger(__name__)
 
-ASTRA_URL = 'https://termin.dachau-med.de/impfungen01/'
+ASTRA_2_URL = 'https://termin.dachau-med.de/impfungen01/'
 JNJ_URL = 'https://termin.dachau-med.de/impfungen02/'
-BIONTECH_URL = 'https://termin.dachau-med.de/impfungen03/'
+BIONTECH_1_URL = 'https://termin.dachau-med.de/impfungen03/'
+BIONTECH_2_URL = 'https://termin.dachau-med.de/impfung/'
 
 
 def _parse_html(html: str) -> bs4.BeautifulSoup:
   return bs4.BeautifulSoup(html, features='html.parser')
 
 
-def _get_vaccination_centers_for(url: str, vaccine_type: VaccineType) -> t.List['DachauMedVaccinationCenter']:
+def _get_vaccination_centers_for(\
+  url: str,
+  vaccine_type: VaccineType,
+  round_num: t.Optional[int]
+) -> t.List['DachauMedVaccinationCenter']:
+
   session = requests.Session()
   response = session.get(url)
   response.raise_for_status()
@@ -46,7 +52,7 @@ def _get_vaccination_centers_for(url: str, vaccine_type: VaccineType) -> t.List[
   result: t.List[DachauMedVaccinationCenter] = []
   for shop in shops:
     result.append(DachauMedVaccinationCenter(
-      vaccine_type, shop['name'], shop['id'], url, extra_data['ajax_url'],
+      vaccine_type, round_num, shop['name'], shop['id'], url, extra_data['ajax_url'],
       extra_data['ajax_nonce']))
 
   return result
@@ -55,15 +61,17 @@ def _get_vaccination_centers_for(url: str, vaccine_type: VaccineType) -> t.List[
 class DachauMedPlugin(IPlugin):
 
   def get_vaccination_centers(self) -> t.Sequence['IVaccinationCenter']:
-    #return _get_vaccination_centers_for(ASTRA_URL, VaccineType.AstraZeneca) + \
-    return _get_vaccination_centers_for(JNJ_URL, VaccineType.JohnsonAndJohnson) + \
-      _get_vaccination_centers_for(BIONTECH_URL, VaccineType.Biontech)
+    return _get_vaccination_centers_for(JNJ_URL, VaccineType.JohnsonAndJohnson, None) + \
+      _get_vaccination_centers_for(ASTRA_2_URL, VaccineType.AstraZeneca, 1) + \
+      _get_vaccination_centers_for(BIONTECH_1_URL, VaccineType.Biontech, 1) + \
+      _get_vaccination_centers_for(BIONTECH_2_URL, VaccineType.Biontech, 2)
 
 
 @dataclass
 class DachauMedVaccinationCenter(IVaccinationCenter):
 
   vaccine_type: VaccineType
+  round_num: t.Optional[int]
   name: str
   salon_id: str
   url: str
@@ -78,7 +86,7 @@ class DachauMedVaccinationCenter(IVaccinationCenter):
   def location(self) -> str:  # type: ignore
     return 'Germany, Bavaria, Landkreis Dachau'
 
-  def check_availability(self) -> t.Dict[VaccineType, AvailabilityInfo]:
+  def check_availability(self) -> t.Dict[VaccineRound, AvailabilityInfo]:
 
     response = requests.post(self.ajax_url, data={
       'sln[shop]': self.salon_id,
@@ -100,4 +108,4 @@ class DachauMedVaccinationCenter(IVaccinationCenter):
       return {}
     intervals = json.loads(data_node.attrs['data-intervals'])
     dates = [datetime.datetime.strptime(d, '%Y-%m-%d').date() for d in intervals['dates']]
-    return {self.vaccine_type: AvailabilityInfo(dates=dates, not_available_until=None)}
+    return {(self.vaccine_type, self.round_num): AvailabilityInfo(dates=dates, not_available_until=None)}

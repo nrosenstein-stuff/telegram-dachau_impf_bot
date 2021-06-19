@@ -13,6 +13,20 @@ class VaccineType(enum.Enum):
   JohnsonAndJohnson = enum.auto()
 
 
+VaccineRound = t.Tuple[VaccineType, t.Optional[int]]
+
+
+KNOWN_VACCINE_ROUNDS = [
+  (VaccineType.Biontech, None),
+  (VaccineType.Biontech, 1),
+  (VaccineType.Biontech, 2),
+  (VaccineType.AstraZeneca, None),
+  (VaccineType.AstraZeneca, 1),
+  (VaccineType.AstraZeneca, 2),
+  (VaccineType.JohnsonAndJohnson, None),
+]
+
+
 class IPlugin(metaclass=abc.ABCMeta):
 
   @abc.abstractmethod
@@ -34,7 +48,7 @@ class IVaccinationCenter(metaclass=abc.ABCMeta):
   url: str
 
   @abc.abstractmethod
-  def check_availability(self) -> t.Dict[VaccineType, 'AvailabilityInfo']: ...
+  def check_availability(self) -> t.Dict[VaccineRound, 'AvailabilityInfo']: ...
 
 
 @dataclass
