@@ -30,6 +30,12 @@ abmelden - Erhalte keine Benachrichtigungen mehr.
 status - Zeige die aktuell Verfügbaren Daten an, an denen Termine frei sind (wird alle 20 Minuten erneuert).
 ```
 
+### Bot Description
+
+Der Bot sendet dir eine Nachricht, wenn bei https://termin.dachau-med.de/ Impftermine frei werden.
+
+Fragen, Probleme oder Anregungen? Gerne an @NiklasRosenstein
+
 ---
 
 <p align="center">Copyright &copy; 2021 Niklas Rosenstein</p>
