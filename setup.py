@@ -22,6 +22,10 @@ requirements = [
   'bs4 >=0.0.1,<1.0.0',
   'databind.core >=0.11.0,<1.0.0',
   'databind.yaml >=0.1.3,<1.0.0',
+  'python-i18n[YAML] >=0.3.9,<1.0.0',
+]
+test_requirements = [
+  'sqlalchemy-stubs',
 ]
 
 setuptools.setup(
@@ -39,7 +43,7 @@ setuptools.setup(
   include_package_data = True,
   install_requires = requirements,
   extras_require = {},
-  tests_require = [],
+  tests_require = test_requirements,
   python_requires = '>=3.5.0,<4.0.0',
   data_files = [],
   entry_points = {

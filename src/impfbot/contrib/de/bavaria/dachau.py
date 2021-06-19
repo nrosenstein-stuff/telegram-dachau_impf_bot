@@ -12,7 +12,9 @@ import json
 import requests
 import typing as t
 from dataclasses import dataclass
-from impfbot.api import AvailabilityInfo, IPlugin, IVaccinationCenter, VaccineRound, VaccineType
+from functools import reduce
+from impfbot.model.api import AvailabilityInfo, VaccineRound, VaccineType, VaccinationCenter
+from impfbot.polling.api import IPlugin, IVaccinationCenter
 
 logger = logging.getLogger(__name__)
 
@@ -26,11 +28,7 @@ def _parse_html(html: str) -> bs4.BeautifulSoup:
   return bs4.BeautifulSoup(html, features='html.parser')
 
 
-def _get_vaccination_centers_for(\
-  url: str,
-  vaccine_type: VaccineType,
-  round_num: t.Optional[int]
-) -> t.List['DachauMedVaccinationCenter']:
+def _get_salons(url: str, vaccine_round: VaccineRound) -> t.List['_Salon']:
 
   session = requests.Session()
   response = session.get(url)
@@ -49,56 +47,43 @@ def _get_vaccination_centers_for(\
   extra_data_json_payload = salon_extra.string.partition('=')[2].strip().rstrip(';')
   extra_data = json.loads(extra_data_json_payload)
 
-  result: t.List[DachauMedVaccinationCenter] = []
+  result: t.List[_Salon] = []
   for shop in shops:
-    result.append(DachauMedVaccinationCenter(
-      vaccine_type, round_num, shop['name'], shop['id'], url, extra_data['ajax_url'],
-      extra_data['ajax_nonce']))
+    result.append(_Salon(
+      id=shop['id'],
+      name=shop['name'],
+      url=url,
+      location='Landkreis Dachau',
+      ajax_url=extra_data['ajax_url'],
+      ajax_nonce=extra_data['ajax_nonce'],
+      vaccine_round=vaccine_round,
+    ))
 
   return result
 
 
-class DachauMedPlugin(IPlugin):
-
-  def get_vaccination_centers(self) -> t.Sequence['IVaccinationCenter']:
-    return _get_vaccination_centers_for(JNJ_URL, VaccineType.JohnsonAndJohnson, None) + \
-      _get_vaccination_centers_for(ASTRA_2_URL, VaccineType.AstraZeneca, 2) + \
-      _get_vaccination_centers_for(BIONTECH_1_URL, VaccineType.Biontech, 1) + \
-      _get_vaccination_centers_for(BIONTECH_2_URL, VaccineType.Biontech, 2)
-
-
 @dataclass
-class DachauMedVaccinationCenter(IVaccinationCenter):
-
-  vaccine_type: VaccineType
-  round_num: t.Optional[int]
+class _Salon:
+  id: str
   name: str
-  salon_id: str
   url: str
+  location: str
   ajax_url: str
-  ajax_none: str
+  ajax_nonce: str
+  vaccine_round: VaccineRound
 
-  @property
-  def uid(self) -> str:  # type: ignore
-    return f'{__name__}:{self.vaccine_type.name}:{self.salon_id}'
-
-  @property
-  def location(self) -> str:  # type: ignore
-    return 'Germany, Bavaria, Landkreis Dachau'
-
-  def check_availability(self) -> t.Dict[VaccineRound, AvailabilityInfo]:
-
+  def poll(self) -> AvailabilityInfo:
     response = requests.post(self.ajax_url, data={
-      'sln[shop]': self.salon_id,
+      'sln[shop]': self.id,
       'sln_step_page': 'shop',
       'submit_shop': 'next',
       'action': 'salon',
       'method': 'salonStep',
-      'security': self.ajax_none,
+      'security': self.ajax_nonce,
     })
 
     if 'Keine freien Termine' in response.text:
-      return {}
+      return AvailabilityInfo(dates=[])
 
     content = response.json()['content']
     soup = bs4.BeautifulSoup(content, features='html.parser')
@@ -106,6 +91,56 @@ class DachauMedVaccinationCenter(IVaccinationCenter):
     if not data_node:
       logger.error('Unable to find node with data-intervals attribute in page.\n\n%s\n', content)
       return {}
+
     intervals = json.loads(data_node.attrs['data-intervals'])
     dates = [datetime.datetime.strptime(d, '%Y-%m-%d').date() for d in intervals['dates']]
-    return {(self.vaccine_type, self.round_num): AvailabilityInfo(dates=dates, not_available_until=None)}
+
+    return AvailabilityInfo(dates=dates)
+
+
+class DachauMedPlugin(IPlugin):
+
+  def get_vaccination_centers(self) -> t.Sequence['IVaccinationCenter']:
+    salons = reduce(lambda a, b: a + b, [
+      _get_salons(JNJ_URL, VaccineRound(VaccineType.JOHNSON_AND_JOHNSON, 0)) + \
+      _get_salons(ASTRA_2_URL, VaccineRound(VaccineType.ASTRA_ZENECA, 2)) + \
+      _get_salons(BIONTECH_1_URL, VaccineRound(VaccineType.BIONTECH, 1)) + \
+      _get_salons(BIONTECH_2_URL, VaccineRound(VaccineType.BIONTECH, 2))
+    ])
+
+    # Transpose the salons and group them by location/salon name.
+    salons_by_name: t.Dict[str, t.List[_Salon]] = {}
+    for salon in salons:
+      salons_by_name.setdefault(salon.name, []).append(salon)
+
+    # Create a vaccination center for the salons grouped by name.
+    centers: t.List[IVaccinationCenter] = []
+    for name, salons in salons_by_name.items():
+      centers.append(DachauMedVaccinationCenter(
+        id=f'{__name__}:{name}',
+        name=name,
+        salons=salons,
+      ))
+
+    return centers
+
+
+@dataclass
+class DachauMedVaccinationCenter(IVaccinationCenter):
+
+  id: str
+  name: str
+  salons: t.List[_Salon]
+
+  def get_metadata(self) -> VaccinationCenter:
+    # TODO(NiklasRosenstein): We need to provide different URLs for the different vaccine rounds.
+    return VaccinationCenter(self.id, self.name, 'https://termin.dachau-med.de/', 'Landkreis Dachau')
+
+  def check_availability(self) -> t.Dict[VaccineRound, AvailabilityInfo]:
+    result = {}
+    for salon in self.salons:
+      try:
+        result[salon.vaccine_round] = salon.poll()
+      except Exception:
+        logger.exception('An unexpected error occurred while polling salon %s', salon)
+    return result
