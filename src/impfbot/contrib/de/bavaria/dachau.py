@@ -62,7 +62,7 @@ class DachauMedPlugin(IPlugin):
 
   def get_vaccination_centers(self) -> t.Sequence['IVaccinationCenter']:
     return _get_vaccination_centers_for(JNJ_URL, VaccineType.JohnsonAndJohnson, None) + \
-      _get_vaccination_centers_for(ASTRA_2_URL, VaccineType.AstraZeneca, 1) + \
+      _get_vaccination_centers_for(ASTRA_2_URL, VaccineType.AstraZeneca, 2) + \
       _get_vaccination_centers_for(BIONTECH_1_URL, VaccineType.Biontech, 1) + \
       _get_vaccination_centers_for(BIONTECH_2_URL, VaccineType.Biontech, 2)
 
