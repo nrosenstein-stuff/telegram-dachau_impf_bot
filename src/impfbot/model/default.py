@@ -123,16 +123,18 @@ class DefaultUserStore(IUSerStore):
   def get_subscription(self, user_id: int) -> Subscription:
     result = Subscription()
     for sub in self._session().query(db.SubscriptionV1).filter(db.SubscriptionV1.user_id == user_id):
-      if sub.type == db.SubscriptionV1.Type.VACCINE_TYPE_AND_ROUND:
+      if sub.type == db.SubscriptionV1.Type.VACCINE_TYPE_AND_ROUND.name:
         assert sub.vaccine_type is not None
         assert sub.vaccine_round is not None
         result.vaccine_rounds.append(VaccineRound(VaccineType[sub.vaccine_type], sub.vaccine_round))
-      elif sub.type == db.SubscriptionV1.Type.VACCINATION_CENTER_ID:
+      elif sub.type == db.SubscriptionV1.Type.VACCINATION_CENTER_ID.name:
         assert sub.vaccination_center_id is not None
         result.vaccination_center_ids.append(sub.vaccination_center_id)
-      elif sub.type == db.SubscriptionV1.Type.VACCINATION_CENTER_QUERY:
+      elif sub.type == db.SubscriptionV1.Type.VACCINATION_CENTER_QUERY.name:
         assert sub.vaccination_center_query is not None
         result.vaccination_center_queries.append(sub.vaccination_center_query)
+      else:
+        raise RuntimeError(f'unhandled subscription type: {sub.type}')
     return result
 
   def subscribe_user(self, user_id: int, subscription: Subscription) -> None:

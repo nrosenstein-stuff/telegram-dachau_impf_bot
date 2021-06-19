@@ -24,7 +24,7 @@ class Impfbot:
     self.telegram_updater = Updater(config.token)
     self.poller = DefaultPoller(datetime.timedelta(seconds=config.check_period))
     self.poller.plugins += IPlugin.load_plugins()
-    self.availability_store = DefaultAvailabilityStore(self.session, datetime.timedelta(hours=1))
+    self.availability_store = DefaultAvailabilityStore(self.session, datetime.timedelta(hours=72))
     self.user_store = DefaultUserStore(self.session)
     self.poller.receivers.append(
       TelegramAvailabilityRecorder(
@@ -56,7 +56,7 @@ class Impfbot:
     self.telegram_updater.dispatcher.add_handler(CallbackQueryHandler(self._callback_query_handler))
 
   def mainloop(self) -> None:
-    #threading.Thread(target=self.poller.mainloop, daemon=True).start()
+    threading.Thread(target=self.poller.mainloop, daemon=True).start()
     self.telegram_updater.start_polling()
     self.telegram_updater.idle()
 
@@ -102,7 +102,8 @@ class Impfbot:
     self.subs.respond(update)
 
   def _callback_query_handler(self, update: Update, context: CallbackContext) -> None:
-    self.subs.respond(update)
+    with self.session:
+      self.subs.respond(update)
 
     """
     user = update.message.from_user

@@ -1,10 +1,11 @@
 
 import abc
 import enum
-import i18n
 import datetime
 import typing as t
 from dataclasses import dataclass, field
+
+from impfbot.utils.locale import get as _
 
 
 @dataclass(frozen=True)
@@ -32,8 +33,11 @@ class VaccineRound(t.NamedTuple):
   round: int = 0
 
   def to_text(self) -> str:
-    round_name = {1: 'one', 2: 'two', 0: 'any'}.get(self.round, 'any')
-    return f'{i18n.t("vaccine_type." + self.type.name)} {i18n.t("vaccine_round." + round_name)}'
+    name = _("vaccine_type." + self.type.name)
+    if self.round != 0:
+      round_name = {1: 'one', 2: 'two', 0: 'any'}.get(self.round, 'any')
+      name += ' ' + _("vaccine_round." + round_name)
+    return name
 
 
 @dataclass(frozen=True)

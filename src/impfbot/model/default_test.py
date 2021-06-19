@@ -43,6 +43,11 @@ class DefaultTest(TestCase):
       assert set(self.avail.search_vaccination_centers('XyZ')) == set([self.xyz])
       assert set(self.avail.search_vaccination_centers('.vacc')) == set([self.abc, self.xyz])
 
+  def test_subscriptions(self):
+    self.setup_test_users()
+    with self.scoped_session:
+      assert self.users.get_subscription(self.u1.id) == Subscription(vaccine_rounds=[VaccineRound(VaccineType.BIONTECH, 1)])
+
   def test_get_users_subscribed_to(self) -> None:
     self.setup_test_centers()
     self.setup_test_users()

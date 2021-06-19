@@ -90,7 +90,7 @@ class _Salon:
     data_node = soup.find(lambda t: 'data-intervals' in t.attrs)
     if not data_node:
       logger.error('Unable to find node with data-intervals attribute in page.\n\n%s\n', content)
-      return {}
+      return AvailabilityInfo()
 
     intervals = json.loads(data_node.attrs['data-intervals'])
     dates = [datetime.datetime.strptime(d, '%Y-%m-%d').date() for d in intervals['dates']]
