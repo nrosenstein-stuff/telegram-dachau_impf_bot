@@ -44,6 +44,7 @@ class Impfbot:
     self._updater.dispatcher.add_handler(telegram.ext.CommandHandler('start', self._register))
     self._updater.dispatcher.add_handler(telegram.ext.CommandHandler('anmelden', self._register))
     self._updater.dispatcher.add_handler(telegram.ext.CommandHandler('abmelden', self._unregister))
+    self._updater.dispatcher.add_handler(telegram.ext.CommandHandler('adm', self._adm))
     self._last_check_at: t.Optional[datetime.datetime] = None
 
   def _dispatch_to_admin(self, message: str, code: t.Optional[str] = None) -> None:
@@ -182,6 +183,25 @@ class Impfbot:
       has_user.subscription_active = False
       session.commit()
       update.message.reply_markdown(Text.UNSUBSCRIBE_OK(first_name=user.first_name))
+
+  def _adm(self, update: telegram.Update, context: telegram.ext.CallbackContext) -> None:
+    if not update.message or update.message.chat_id != self._config.admin_chat_id:
+      return
+
+    try:
+      import argparse, shlex
+      parser = argparse.ArgumentParser()
+      parser.add_argument('--stats', action='store_true')
+      # TODO: Capture parser output to stderr
+      args = parser.parse_args(shlex.split(update.message.text.replace('—', '--'))[1:])
+    except BaseException:
+      self._dispatch_to_admin(f'Error executing {update.message.text}', traceback.format_exc())
+
+    if args.stats:
+      with model.session() as session:
+        registered_users = session.query(model.UserRegistration).count()
+        subscribed_users = session.query(model.UserRegistration).filter(model.UserRegistration.subscription_active == True).count()
+      update.message.reply_text(f'Registered users: {registered_users}, subscribed: {subscribed_users}')
 
   def main(self):
     thread = threading.Thread(target=self._check_availability_worker, daemon=True)
