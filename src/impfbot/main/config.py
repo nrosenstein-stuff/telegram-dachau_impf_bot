@@ -7,7 +7,7 @@ import databind.yaml as yaml
 class Config:
   token: str
   admin_chat_id: int = 56970700  # Niklas R.
-  database_spec: str = 'sqlite+pysqlite:///impfbot.db'
+  database_spec: str = 'sqlite+pysqlite:///data/impfbot.db'
   check_period: int = 20  # minutes
   log_format: str = '[%(asctime)s - %(levelname)s - %(name)s]: %(message)s'
 

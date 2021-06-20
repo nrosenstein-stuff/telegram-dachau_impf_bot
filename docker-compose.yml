@@ -1,0 +1,7 @@
+version: '3.4'
+services:
+  impfbot:
+    build: .
+    volumes:
+      - ./config.yml:/opt/app/config.yml
+      - ./data:/opt/app/data
