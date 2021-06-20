@@ -1,6 +1,6 @@
 
 from dataclasses import dataclass
-from databind import yaml
+import databind.yaml as yaml
 
 
 @dataclass

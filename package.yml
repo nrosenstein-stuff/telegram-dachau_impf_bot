@@ -12,8 +12,9 @@ requirements:
 - databind.yaml ^0.1.3
 test-requirements:
 - sqlalchemy-stubs
-- types-pkg_resources
 - types-cachetools
+- types-requests
+- types-pkg_resources
 entrypoints:
   impfbot.api.IPlugin:
   - dachau = impfbot.contrib.de.bavaria.dachau:DachauMedPlugin

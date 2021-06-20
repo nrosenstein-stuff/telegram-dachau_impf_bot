@@ -97,7 +97,7 @@ class Impfbot:
       parser = argparse.ArgumentParser()
       parser.add_argument('--stats', action='store_true')
       # TODO: Capture parser output to stderr
-      args = parser.parse_args(shlex.split(update.message.text.replace('—', '--'))[1:])
+      args = parser.parse_args(shlex.split((update.message.text or '').replace('—', '--'))[1:])
     except BaseException:
       logger.exception('Error executing admin command %r', update.message.text)
 
