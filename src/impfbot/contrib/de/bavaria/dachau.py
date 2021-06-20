@@ -9,6 +9,7 @@ import bs4  # type: ignore
 import datetime
 import logging
 import json
+import re
 import requests
 import typing as t
 from dataclasses import dataclass
@@ -108,17 +109,19 @@ class DachauMedPlugin(IPlugin):
       _get_salons(BIONTECH_2_URL, VaccineRound(VaccineType.BIONTECH, 2))
     ])
 
-    # Transpose the salons and group them by location/salon name.
+    # Transpose the salons and group them by location/salon name. Some salon names might be
+    # slightly inconsistent, so we group them by a canonicalized name.
     salons_by_name: t.Dict[str, t.List[_Salon]] = {}
     for salon in salons:
-      salons_by_name.setdefault(salon.name, []).append(salon)
+      name = re.sub(r'[\(\)\s\./]+', '', salon.name).lower()
+      salons_by_name.setdefault(name, []).append(salon)
 
     # Create a vaccination center for the salons grouped by name.
     centers: t.List[IVaccinationCenter] = []
     for name, salons in salons_by_name.items():
       centers.append(DachauMedVaccinationCenter(
         id=f'{__name__}:{name}',
-        name=name,
+        name=max((x.name for x in salons), key=len),  # Pick one with the longest name
         salons=salons,
       ))
 
