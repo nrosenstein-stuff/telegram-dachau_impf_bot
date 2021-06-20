@@ -116,6 +116,13 @@ class DefaultUserStore(IUSerStore):
       query = query.join(db.SubscriptionV1).filter(db.SubscriptionV1.id != None)
     return query.distinct(db.UserV1.id).count()
 
+  def get_users(self, offset: t.Optional[int] = None, limit: t.Optional[int] = None) -> t.List[User]:
+    query = self._session().query(db.UserV1).order_by(db.UserV1.id).offset(offset).limit(limit)
+    result = []
+    for user in query:
+      result.append(User(user.id, user.chat_id, user.first_name))
+    return result
+
   def register_user(self, user: User) -> None:
     has_user, in_old_table = self._get_user(user.id)
     if not has_user or in_old_table or has_user != user:

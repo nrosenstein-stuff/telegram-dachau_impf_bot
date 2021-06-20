@@ -90,6 +90,9 @@ class IUSerStore(metaclass=abc.ABCMeta):
   def get_user_count(self, with_subscription_only: bool) -> int: ...
 
   @abc.abstractmethod
+  def get_users(self, offset: t.Optional[int] = None, limit: t.Optional[int] = None) -> t.List[User]: ...
+
+  @abc.abstractmethod
   def register_user(self, user: User) -> None: ...
 
   @abc.abstractmethod

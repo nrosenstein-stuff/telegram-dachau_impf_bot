@@ -4,7 +4,7 @@ import datetime
 import logging
 import threading
 import typing as t
-from telegram import Update
+from telegram import Update, ParseMode, TelegramError
 from telegram.ext import CallbackContext, CommandHandler, Updater, CallbackQueryHandler
 from telegram.message import Message
 
@@ -58,6 +58,7 @@ class Impfbot:
     self.add_command('start', self._command_start)
     self.add_command('einstellungen', self._command_config)
     self.add_command('adm', self._command_admin)
+    self.add_command('broadcast', self._command_broadcast)
     self.telegram_updater.dispatcher.add_handler(CallbackQueryHandler(self._callback_query_handler))
 
   def mainloop(self) -> None:
@@ -105,3 +106,17 @@ class Impfbot:
       update.message.reply_text(\
         f'Number of registered users: {self.user_store.get_user_count(False)}\n'
         f'NUmber of users with active subscriptions: {self.user_store.get_user_count(True)}')
+
+  def _command_broadcast(self, update: Update, context: CallbackContext) -> None:
+    if not update.message or not update.message.text: return
+    if update.message.chat_id != self.config.admin_chat_id: return
+
+    prefix = '/broadcast'
+    assert update.message.text.startswith(prefix)
+    text = update.message.text[len(prefix):].strip().replace('.', '\\.').replace('!', '\\!')
+
+    for user in self.user_store.get_users():
+      try:
+        self.bot.send_message(chat_id=user.chat_id, text=text, parse_mode=ParseMode.MARKDOWN_V2)
+      except TelegramError:
+        logger.exception('Could not send message to chat_id %s', user.chat_id)
