@@ -86,6 +86,7 @@ class SubscriptionManager:
       subscription.vaccination_center_queries.remove('%')
     else:
       subscription.vaccination_center_queries.append('%')
+    self.users.subscribe_user(user_id, subscription)
     return self._get_vaccination_center_picker_view(user_id, subscription)
 
   def _toggle_vaccination_center_id(self, user_id: int, center_id: str) -> tgui.View:
@@ -111,7 +112,7 @@ class SubscriptionManager:
       name = center.name
       if all_enabled:
         name += ' ⚡'
-      elif center.id in subscription.vaccination_center_ids:
+      if center.id in subscription.vaccination_center_ids:
         name += ' ✅'
       view.add_button(name, {'id': center.id}).connect(
         lambda ctx, btn: self._toggle_vaccination_center_id(ctx.user_id(), btn.args['id']))

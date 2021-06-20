@@ -154,20 +154,20 @@ class DefaultUserStore(IUSerStore):
     self.unsubscribe_user(user_id)
     # Re-create all the subscription details.
     s = self._session()
-    for vaccine_round in subscription.vaccine_rounds or []:
+    for vaccine_round in subscription.vaccine_rounds:
       s.add(db.SubscriptionV1(
         user_id=user_id,
         type=db.SubscriptionV1.Type.VACCINE_TYPE_AND_ROUND.name,
         vaccine_type=vaccine_round[0].name,
         vaccine_round=vaccine_round[1],
       ))
-    for vaccination_center_id in subscription.vaccination_center_ids or []:
+    for vaccination_center_id in subscription.vaccination_center_ids:
       s.add(db.SubscriptionV1(
         user_id=user_id,
         type=db.SubscriptionV1.Type.VACCINATION_CENTER_ID.name,
         vaccination_center_id=vaccination_center_id,
       ))
-    for vaccination_center_query in subscription.vaccination_center_queries or []:
+    for vaccination_center_query in subscription.vaccination_center_queries:
       s.add(db.SubscriptionV1(
         user_id=user_id,
         type=db.SubscriptionV1.Type.VACCINATION_CENTER_QUERY.name,
