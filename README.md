@@ -1,7 +1,7 @@
-# Dachau Impf Bot
+# [@dachau_impf_bot](https://t.me/dachau_impf_bot)
 
-A simple Telegram bot to check the contents of https://termin.dachau-med.de for available slots and
-inform users of the available dates. This is to avoid having to constantly check for available slots
+A Telegram bot to check the contents of https://termin.dachau-med.de for available slots and inform
+users of the available dates. This is to avoid having to constantly check for available slots
 manually.
 
 The architecture allows that other portals for vaccination signup could be supported easily, but we
