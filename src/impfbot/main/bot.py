@@ -60,6 +60,7 @@ class Impfbot:
     self.add_command('einstellungen', self._command_config)
     self.add_command('adm', self._command_admin)
     self.add_command('broadcast', self._command_broadcast)
+    self.add_command('broadcast4real', self._command_broadcast)
     self.telegram_updater.dispatcher.add_handler(CallbackQueryHandler(self._callback_query_handler))
 
   def mainloop(self) -> None:
@@ -113,12 +114,25 @@ class Impfbot:
     if update.message.chat_id != self.config.admin_chat_id: return
 
     prefix = '/broadcast'
-    assert update.message.text.startswith(prefix)
+    prefix_4_real = '/broadcast4real'
+    for_real = update.message.text.startswith(prefix_4_real)
+    assert for_real or update.message.text.startswith(prefix)
+    text = update.message.text[len(prefix_4_real if for_real else prefix):]
     nonce = str(uuid.uuid4())
-    text = update.message.text[len(prefix):].strip().replace('\n\n', nonce).replace('\n', ' ').replace(nonce, '\n\n')
+    text = text.replace('\n\n', nonce).replace('\n', ' ').replace(nonce, '\n\n')
+    if not text:
+      return
 
-    for user in self.user_store.get_users():
+    if for_real:
+      chat_ids = [x.chat_id for x in self.user_store.get_users()]
+    else:
+      chat_ids = [update.message.chat_id]
+
+    for chat_id in chat_ids:
       try:
-        self.bot.send_message(chat_id=user.chat_id, text=text, parse_mode=ParseMode.MARKDOWN)
+        self.bot.send_message(chat_id=chat_id, text=text, parse_mode=ParseMode.MARKDOWN)
+        if not for_real:
+          self.bot.send_message(chat_id=chat_id, text=f'Use {prefix_4_real} to actually send '
+            f'the message to {self.user_store.get_user_count(False)} users.')
       except TelegramError:
-        logger.exception('Could not send message to chat_id %s', user.chat_id)
+        logger.exception('Could not send message to chat_id %s', chat_id)
