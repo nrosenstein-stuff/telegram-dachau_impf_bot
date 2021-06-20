@@ -2,6 +2,8 @@
 conversation:
   start: Hallo {first_name}, willkommen bei {bot_name}. Sende /einstellungen um zu
     konfigurieren, für welche Impfstoffe und Arztpraxen du Benachrichtigungen erhalten möchtest.
+    Bevor du diese Konfiguration durchgeführt hast, werde ich dir keine Benachrichtigungen
+    schicken.
 
 emoji:
   enabled: ✅
@@ -14,17 +16,19 @@ subscriptions:
       back: << Zurück
     main:
       message: Hier kannst du auswählen, für welche Impfstoffe und Arztpraxen ich dir Benachrichtigungen schicken soll.
-      choose_vaccination_centers: Arztpraxen wählen
-      choose_vaccine_rounds: Impfstoffe wählen
+      choose_vaccination_centers: Arztpraxen
+      choose_vaccine_rounds: Impfstoffe
       unsubscribe_all: Benachrichtigungen ausschalten
-      close_dialog: Dialog schließen
+      close_dialog: Schließen
     choose_vaccination_centers:
-      message: Hier kannst du Arztpraxen an- und abwählen für die ich dir Nachrichten schicken werden.
+      message: Wähle hier die Arztpraxen für die du Benachrichtigungen erhalten möchtest. Wenn du
+        hier keine Auswahl getroffen hast, erhältst du keine Benachrichtigungen.
     choose_vaccine_rounds:
-      message: Hier kannst du Impfstoffe an- und abwählen für die ich dir Nachrichten schicken werden.
+      message: Wähle hier die Impfstoffe für die du Benachrichtigungen erhalten möchtest. Wenn du
+        hier keine Auswahl getroffen hast, erhältst du keine Benachrichtigungen.
     responses:
-      unsubscribed: Du erhältst jetzt keine Benachrichtigungen mehr. Sende jederzeit /einstellungen
-        um deine Einstellungen zu ändern.
+      unsubscribed: Du erhältst jetzt keine Benachrichtigungen mehr. Du kannst deine /einstellungen
+        jederzeit ändern, um wieder Benachrichtigungen zu erhalten.
 
 notification:
   immediate: 'Termine für <b>{vaccine_name}</b> bei <a href="{link}">{name}</a> sind an folgenden Tagen frei: {dates}'
