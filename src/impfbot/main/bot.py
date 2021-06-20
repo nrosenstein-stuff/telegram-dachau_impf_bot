@@ -4,6 +4,7 @@ import datetime
 import logging
 import threading
 import typing as t
+import uuid
 from telegram import Update, ParseMode, TelegramError
 from telegram.ext import CallbackContext, CommandHandler, Updater, CallbackQueryHandler
 from telegram.message import Message
@@ -113,7 +114,8 @@ class Impfbot:
 
     prefix = '/broadcast'
     assert update.message.text.startswith(prefix)
-    text = update.message.text[len(prefix):].strip().replace('.', '\\.').replace('!', '\\!')
+    nonce = str(uuid.uuid4())
+    text = update.message.text[len(prefix):].strip().replace('\n\n', nonce).replace('\n', ' ').replace(nonce, '\n\n')
 
     for user in self.user_store.get_users():
       try:
