@@ -33,8 +33,10 @@ class TelegramAvailabilityDispatcher(api.IDataReceiver):
     if not data.dates:
       return
 
+    vcenter = center.get_metadata()
+    logger.info('Dispatching availability for %s at %s.', vaccine_round, vcenter.id)
+
     with self._session:
-      vcenter = center.get_metadata()
       for user in self._users.get_users_subscribed_to(vcenter.id, vaccine_round):
         try:
           self._bot.send_message(

@@ -29,26 +29,24 @@ class DefaultPoller:
     try:
       centers: t.List[api.IVaccinationCenter] = []
       for plugin in self.plugins:
-        logger.info('Polling vaccination centers for %s', plugin)
+        plugin_id = type(plugin).__module__ + '.' + type(plugin).__qualname__
+        logger.info('Polling vaccination centers for %s', plugin_id)
         try:
           centers += plugin.get_vaccination_centers()
         except Exception:
-          logger.exception('An unexpected error occurred while retrieving the vaccination '
-            'centers provided via %s.', plugin)
+          logger.exception('An unexpected error occurred while polling vaccination '
+            'centers for %s.', plugin_id)
           continue
-      logger.info('Dispatching vaccination centers (count: %s)', len(centers))
       for center in centers:
         dispatcher.on_vaccination_center(center)
-      dispatcher.end_polling_vaccination_centers()
       for center in centers:
-        logger.info('Checking availability of %s', center.get_metadata())
+        logger.info('Polling availability for %s', center.get_metadata().id)
         try:
           availability = center.check_availability()
         except Exception:
           logger.exception('An unexpected error occurred while checking the availability of %s',
             center.get_metadata())
         else:
-          logger.info('  Result: %s', availability)
           for vaccine_round, data in availability.items():
             dispatcher.on_availability_info_ready(center, vaccine_round, data)
     finally:
