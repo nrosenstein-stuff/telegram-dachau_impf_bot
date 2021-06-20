@@ -39,7 +39,7 @@ class TelegramAvailabilityDispatcher(api.IDataReceiver):
         try:
           self._bot.send_message(
             chat_id=user.chat_id,
-            text=_('availability.single.long',
+            text=_('notification.immediate',
               vaccine_name=vaccine_round.to_text(),
               link=vcenter.url,
               name=vcenter.name,
@@ -96,7 +96,9 @@ class TelegramAvailabilityRecorder(api.IDataReceiver):
     # TODO(NiklasRosenstein): Check if we ever sent this user a notiication for this
     #   center/vaccine_round before. If we haven't, we want to dispatch the notification
     #   anyway.
-    if not set(data.dates).issubset(set(last_data.dates)):
+    if set(data.dates).issubset(set(last_data.dates)):
+      logger.info('Skipping notification dispatch because no new dates are available.')
+    else:
       try:
         self._dispatch_on_change.on_availability_info_ready(center, vaccine_round, data)
       except Exception:
