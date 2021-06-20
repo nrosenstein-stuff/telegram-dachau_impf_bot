@@ -64,6 +64,9 @@ class Subscription:
 class IAvailabilityStore(metaclass=abc.ABCMeta):
 
   @abc.abstractmethod
+  def delete_vaccination_center(self, vaccination_center_id: str) -> None: ...
+
+  @abc.abstractmethod
   def upsert_vaccination_center(self, vaccination_center: VaccinationCenter) -> None: ...
 
   @abc.abstractmethod

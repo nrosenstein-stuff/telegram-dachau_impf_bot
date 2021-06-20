@@ -1,5 +1,6 @@
 
 import logging
+import typing as t
 from telegram import Bot, TelegramError, ParseMode
 
 from impfbot import model
@@ -60,8 +61,21 @@ class TelegramAvailabilityRecorder(api.IDataReceiver):
     self._session = session
     self._avail = avail
     self._dispatch_on_change = dispatch_on_change
+    self._recorded_vaccination_center_ids: t.Set[str] = set()
+
+  # def begin_polling(self) -> None:
+  #   self._recorded_vaccination_center_ids.clear()
+
+  # def end_polling_vaccination_centers(self) -> None:
+  #   # Remove any vaccination centers that we have not received metadata for.
+  #   with self._session:
+  #     for center in self._avail.search_vaccination_centers(None):
+  #       if center.id not in self._recorded_vaccination_center_ids:
+  #         self._avail.delete_vaccination_center(center.id)
+  #   self._recorded_vaccination_center_ids.clear()
 
   def on_vaccination_center(self, center: api.IVaccinationCenter) -> None:
+    self._recorded_vaccination_center_ids.add(center.get_metadata().id)
     with self._session:
       self._avail.upsert_vaccination_center(center.get_metadata())
 

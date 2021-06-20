@@ -76,7 +76,7 @@ class Impfbot:
   def _command_start(self, update: Update, context: CallbackContext) -> None:
     if not update.message: return
     user = self._register_user_from_message(update.message)
-    msg = _('welcome_message', first_name=user.first_name, bot_name=self.bot.name.replace('_', '\\_'))
+    msg = _('conversation.start', first_name=user.first_name, bot_name=self.bot.name.replace('_', '\\_'))
     update.message.reply_markdown(msg)
 
   def _command_config(self, update: Update, context: CallbackContext) -> None:

@@ -29,14 +29,17 @@ class DefaultPoller:
     centers = []
     try:
       for plugin in self.plugins:
+        logger.info('Polling vaccination centers for %s', plugin)
         try:
           centers += plugin.get_vaccination_centers()
         except Exception:
           logger.exception('An unexpected error occurred while retrieving the vaccination '
             'centers provided via %s.', plugin)
           continue
+      logger.info('Dispatching vaccination centers (count: %s)', len(centers))
       for center in centers:
         dispatcher.on_vaccination_center(center)
+      dispatcher.end_polling_vaccination_centers()
       for center in centers:
         logger.info('Checking availability of %s', center.get_metadata())
         try:

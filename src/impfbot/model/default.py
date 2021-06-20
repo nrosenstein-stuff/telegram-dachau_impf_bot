@@ -29,6 +29,12 @@ class DefaultAvailabilityStore(IAvailabilityStore):
     self._session = session
     self._ttl = ttl
 
+  def delete_vaccination_center(self, vaccination_center_id: str) -> None:
+    # TODO(NiklasRosenstein): Drop connected availability?
+    obj = self._session().query(db.VaccinationCenterV1).get(vaccination_center_id)
+    if obj:
+      self._session().delete(obj)
+
   def upsert_vaccination_center(self, vaccination_center: VaccinationCenter) -> None:
     db_obj = db.VaccinationCenterV1(
       id=vaccination_center.id,
