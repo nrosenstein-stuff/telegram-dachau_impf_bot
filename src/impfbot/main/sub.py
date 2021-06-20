@@ -134,6 +134,5 @@ class SubscriptionManager:
     )
     view.add_button(_('subscriptions.dialog.main.unsubscribe_all')).connect(
       lambda ctx, btn: self._unsubscribe(ctx.user_id()))
-    view.add_button(_('subscriptions.dialog.main.close_dialog')).connect(
-      lambda ctx, btn: (ctx.delete_message(), None)[1])
+    view.add_button(_('subscriptions.dialog.main.close_dialog')).connect(lambda ctx, btn: None)
     return view
