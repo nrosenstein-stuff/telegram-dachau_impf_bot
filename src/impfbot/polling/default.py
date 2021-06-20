@@ -26,25 +26,27 @@ class DefaultPoller:
   def poll_once(self) -> None:
     dispatcher = api.IDataReceiver.Dispatcher(self.receivers)
     dispatcher.begin_polling()
+    centers = []
     try:
       for plugin in self.plugins:
         try:
-          plugin_centers = plugin.get_vaccination_centers()
+          centers += plugin.get_vaccination_centers()
         except Exception:
           logger.exception('An unexpected error occurred while retrieving the vaccination '
             'centers provided via %s.', plugin)
           continue
-        for center in plugin_centers:
-          dispatcher.on_vaccination_center(center)
-          logger.info('Checking availability of %s', center.get_metadata())
-          try:
-            availability = center.check_availability()
-          except Exception:
-            logger.exception('An unexpected error occurred while checking the availability of %s',
-              center.get_metadata())
-          else:
-            logger.info('  Result: %s', availability)
-            for vaccine_round, data in availability.items():
-              dispatcher.on_availability_info_ready(center, vaccine_round, data)
+      for center in centers:
+        dispatcher.on_vaccination_center(center)
+      for center in centers:
+        logger.info('Checking availability of %s', center.get_metadata())
+        try:
+          availability = center.check_availability()
+        except Exception:
+          logger.exception('An unexpected error occurred while checking the availability of %s',
+            center.get_metadata())
+        else:
+          logger.info('  Result: %s', availability)
+          for vaccine_round, data in availability.items():
+            dispatcher.on_availability_info_ready(center, vaccine_round, data)
     finally:
       dispatcher.end_polling()
