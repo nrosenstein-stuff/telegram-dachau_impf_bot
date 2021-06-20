@@ -23,20 +23,6 @@ class DefaultTest(TestCase):
       self.avail.upsert_vaccination_center(self.abc)
       self.avail.upsert_vaccination_center(self.xyz)
 
-  def setup_test_users(self):
-    with self.scoped_session:
-      self.u1 = User(42, 42, 'u1')
-      self.u2 = User(532, 532, 'u2')
-      self.u3 = User(214, 214, 'u3')
-      self.u4 = User(214, 214, 'u4')
-      self.users.register_user(self.u1)
-      self.users.subscribe_user(self.u1.id, Subscription(vaccine_rounds=[(VaccineType.BIONTECH, 1)]))
-      self.users.register_user(self.u2)
-      self.users.subscribe_user(self.u2.id, Subscription(vaccination_center_ids=['xyz']))
-      self.users.register_user(self.u3)
-      self.users.subscribe_user(self.u3.id, Subscription(vaccination_center_queries=['heim']))
-      self.users.register_user(self.u4)
-
   def test_search_vaccination_centers(self):
     self.setup_test_centers()
     with self.scoped_session:
@@ -45,15 +31,46 @@ class DefaultTest(TestCase):
       assert set(self.avail.search_vaccination_centers('XyZ')) == set([self.xyz])
       assert set(self.avail.search_vaccination_centers('.vacc')) == set([self.abc, self.xyz])
 
+  def setup_test_users(self) -> None:
+    with self.scoped_session:
+
+      # Subscribing to just a vaccine round doesn't match you with any availabilities.
+      self.u1 = User(1, 1, 'u1')
+      self.users.register_user(self.u1)
+      self.users.subscribe_user(self.u1.id, Subscription(
+        vaccine_rounds=[VaccineRound(VaccineType.BIONTECH, 1)]))
+
+      # Subscribing to just a vaccination center doesn't match you with any availabilities.
+      self.u2 = User(2, 2, 'u2')
+      self.users.register_user(self.u2)
+      self.users.subscribe_user(self.u2.id, Subscription(
+        vaccination_center_ids=['xyz']))
+
+      self.u3 = User(3, 3, 'u3')
+      self.users.register_user(self.u3)
+      self.users.subscribe_user(self.u3.id, Subscription(
+        vaccine_rounds=[VaccineRound(VaccineType.BIONTECH, 1)],
+        vaccination_center_queries=['heim']))
+
+      self.u4 = User(4, 4, 'u4')
+      self.users.register_user(self.u4)
+      self.users.subscribe_user(self.u4.id, Subscription(
+        vaccine_rounds=[VaccineRound(VaccineType.JOHNSON_AND_JOHNSON, 0)],
+        vaccination_center_ids=['xyz']))
+
   def test_subscriptions(self):
     self.setup_test_users()
     with self.scoped_session:
-      assert self.users.get_subscription(self.u1.id) == Subscription(vaccine_rounds=[VaccineRound(VaccineType.BIONTECH, 1)])
+      assert self.users.get_subscription(self.u1.id) == Subscription(
+        vaccine_rounds=[VaccineRound(VaccineType.BIONTECH, 1)])
 
   def test_get_users_subscribed_to(self) -> None:
     self.setup_test_centers()
     self.setup_test_users()
     with self.scoped_session:
-      assert set(self.users.get_users_subscribed_to('abc', VaccineRound(VaccineType.BIONTECH, 0))) == set([self.u1, self.u3])
-      assert set(self.users.get_users_subscribed_to('xyz', VaccineRound(VaccineType.ASTRA_ZENECA, 1))) == set([self.u2, self.u3])
-      assert set(self.users.get_users_subscribed_to('abc', VaccineRound(VaccineType.ASTRA_ZENECA, 1))) == set([self.u3])
+      assert set(self.users.get_users_subscribed_to(
+        'abc', VaccineRound(VaccineType.BIONTECH, 0))) == set([self.u3])
+      assert set(self.users.get_users_subscribed_to(
+        'xyz', VaccineRound(VaccineType.ASTRA_ZENECA, 1))) == set([])
+      assert set(self.users.get_users_subscribed_to(
+        'xyz', VaccineRound(VaccineType.JOHNSON_AND_JOHNSON, 0))) == set([self.u4])

@@ -191,28 +191,33 @@ class DefaultUserStore(IUSerStore):
     limit: t.Optional[int] = None,
   ) -> t.List[User]:
 
+    subs1 = db.aliased(db.SubscriptionV1)
+    subs2 = db.aliased(db.SubscriptionV1)
+
     if vaccine_round[1] == 0:
       vaccine_round_filter = True
     else:
-      vaccine_round_filter = (db.SubscriptionV1.vaccine_round == vaccine_round[1])
+      vaccine_round_filter = (subs1.vaccine_round == vaccine_round[1])
 
-    # TODO(NiklasRosenstein): Users with no subscription entries at all should not match
-    #   any vaccine_center/vaccine_round.
-
-    query = self._session().query(db.VaccinationCenterV1, db.UserV1)\
-      .filter(db.VaccinationCenterV1.id == vaccination_center_id)\
-      .join(db.SubscriptionV1)\
+    query = (self._session().query(db.VaccinationCenterV1, db.UserV1)
+      .filter(db.VaccinationCenterV1.id == vaccination_center_id)
+      .join(subs1)
       .filter(
-        ( (db.SubscriptionV1.type == db.SubscriptionV1.Type.VACCINE_TYPE_AND_ROUND.name) &
-          (db.SubscriptionV1.vaccine_type == vaccine_round[0].name) &
-          vaccine_round_filter) |
-        ( (db.SubscriptionV1.type == db.SubscriptionV1.Type.VACCINATION_CENTER_ID.name) &
-          (db.SubscriptionV1.vaccination_center_id == vaccination_center_id)) |
-        ( (db.SubscriptionV1.type == db.SubscriptionV1.Type.VACCINATION_CENTER_QUERY.name) &
-          (db.VaccinationCenterV1.construct_search_query(db.SubscriptionV1.vaccination_center_query)) )
-      )\
-      .offset(offset)\
-      .limit(offset)
+        (subs1.type == subs1.Type.VACCINE_TYPE_AND_ROUND.name) &
+        (subs1.vaccine_type == vaccine_round[0].name) &
+        vaccine_round_filter
+      )
+      .join(subs2)
+      .filter((
+          (subs2.type == subs2.Type.VACCINATION_CENTER_ID.name) &
+          (subs2.vaccination_center_id == vaccination_center_id)
+        )|(
+          (subs2.type == subs2.Type.VACCINATION_CENTER_QUERY.name) &
+          (db.VaccinationCenterV1.construct_search_query(subs2.vaccination_center_query))
+        ))
+      .offset(offset)
+      .limit(limit)
+    )
 
     user: db.UserV1
     result = []

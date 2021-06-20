@@ -5,7 +5,7 @@ import typing as t
 from sqlalchemy import create_engine, Column, DateTime, Integer, String, ForeignKey, JSON
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import aliased, Session
 
 from impfbot.utils.local import LocalList
 
@@ -15,6 +15,7 @@ __all__ = [
   'VaccinationCenterV1',
   'UserV1',
   'SubscriptionV1',
+  'aliased',
 ]
 
 engine: t.Optional[Engine] = None
