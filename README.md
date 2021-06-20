@@ -10,15 +10,12 @@ the user instead of sending them any and all available slots as is the case righ
 
 ## Deployment
 
-1. Create a virtual environment and activate it: `python3 -m venv .venv && . .venv/bin/activate`
-2. Install the bot into the environment: `pip install .`
-3. Create a configuration file named `config.yml` with the Telegram Bot API token:
-
-    ```yml
-    token: 1817430213:AAEowX5LBdv6DTDgb90CPJ4rEAbQFowRi5o
-    ```
-
-4. Start the bot with `python -m impfbot`
+```
+$ git clone https://github.com/NiklasRosenstein/telegram-dachau_impf_bot.git
+$ cd telegram-dachau_impf_bot
+$ echo "token: TOKEN_HERE" >config.yml
+$ docker-compose up -d
+```
 
 ## Documentation
 
