@@ -8,6 +8,8 @@ The architecture allows that other portals for vaccination signup could be suppo
 would probably need to add functionality to subscribe to a subset of available portals relevant for
 the user instead of sending them any and all available slots as is the case right now.
 
+![Demo](.img/demo.png)
+
 ## Deployment
 
 ```
