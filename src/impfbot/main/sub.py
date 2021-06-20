@@ -7,6 +7,7 @@ from databind.json import from_str, to_str
 from impfbot.model import IAvailabilityStore, IUSerStore
 from impfbot.model.api import Subscription, VaccineRound, VaccineType
 from impfbot.utils import tgui
+from impfbot.utils.locale import get as _
 
 
 KNOWN_ROUNDS = [
@@ -70,14 +71,14 @@ class SubscriptionManager:
 
   def _get_vaccine_type_picker_view(self, user_id: int, subscription: t.Optional[Subscription] = None) -> tgui.View:
     subscription = subscription or self.users.get_subscription(user_id)
-    view = tgui.View('Impfstoffe')
+    view = tgui.View(_('subscriptions.dialog.choose_vaccine_rounds.message'))
     for vaccine_round in KNOWN_ROUNDS:
       name = vaccine_round.to_text()
       if vaccine_round in subscription.vaccine_rounds:
         name += ' ✅'
       view.add_button(name, {'vaccine_round': vaccine_round}).connect(
         lambda ctx, btn: self._toggle_vaccine_type_filter(ctx.user_id(), btn.args['vaccine_round']))
-    view.add_button('<< Zurück').connect(lambda ctx, btn: self.get_root_view(ctx.user_id()))
+    view.add_button(_('subscriptions.dialog.general.back')).connect(lambda ctx, btn: self.get_root_view(ctx.user_id()))
     return view
 
   def _toggle_match_all(self, user_id: int) -> tgui.View:
@@ -100,33 +101,39 @@ class SubscriptionManager:
 
   def _get_vaccination_center_picker_view(self, user_id, subscription: t.Optional[Subscription] = None) -> tgui.View:
     subscription = subscription or self.users.get_subscription(user_id)
-    view = tgui.View('Praxen')
+    view = tgui.View(_('subscriptions.dialog.choose_vaccination_centers.message'))
 
     all_enabled = '%' in subscription.vaccination_center_queries
-    name = 'Alle'
+    name = _('subscriptions.dialog.general.all')
     if all_enabled:
-      name += ' ✅'
+      name += ' ' + _('emoji.enabled')
     view.add_button(name).connect(lambda ctx, btn: self._toggle_match_all(ctx.user_id()))
 
     for center in self.avail.search_vaccination_centers(None):
       name = center.name
       if all_enabled:
-        name += ' ⚡'
+        name += ' ' + _('emoji.enabled_implicit')
       if center.id in subscription.vaccination_center_ids:
-        name += ' ✅'
+        name += ' ' + _('emoji.enabled')
       view.add_button(name, {'id': center.id}).connect(
         lambda ctx, btn: self._toggle_vaccination_center_id(ctx.user_id(), btn.args['id']))
-    view.add_button('<< Zurück').connect(lambda ctx, btn: self.get_root_view(ctx.user_id()))
+    view.add_button(_('subscriptions.dialog.general.back')).connect(lambda ctx, btn: self.get_root_view(ctx.user_id()))
     return view
 
   def _unsubscribe(self, user_id) -> tgui.View:
     self.users.unsubscribe_user(user_id)
-    return tgui.View('Ok, du bekommst keine Nachrichten mehr bis du wieder Praxen und '
-      'Impfstoffe auswählst\\. Schicke hierzu einfach wieder /einstellungen an mich\\.')
+    return tgui.View(_('subscriptions.dialog.responses.unsubscribed'))
 
   def get_root_view(self, user_id: int) -> tgui.View:
-    view = tgui.View('Hier kannst du auswählen, für welche Impfstoffe und Arztpraxen ich dir Benachrichtigungen schicken soll.`')
-    view.add_button('Praxen wählen').connect(lambda ctx, _b: self._get_vaccination_center_picker_view(ctx.user_id()))
-    view.add_button('Impfstoffe wählen').connect(lambda ctx, btn: self._get_vaccine_type_picker_view(ctx.user_id()))
-    view.add_button('Abbestellen').connect(lambda ctx, btn: self._unsubscribe(ctx.user_id()))
+    view = tgui.View(_('subscriptions.dialog.main.message'))
+    view.add_buttons(
+      tgui.Button(_('subscriptions.dialog.main.choose_vaccination_centers')).connect(
+        lambda ctx, _b: self._get_vaccination_center_picker_view(ctx.user_id())),
+      tgui.Button(_('subscriptions.dialog.main.choose_vaccine_rounds')).connect(
+        lambda ctx, btn: self._get_vaccine_type_picker_view(ctx.user_id()))
+    )
+    view.add_button(_('subscriptions.dialog.main.unsubscribe_all')).connect(
+      lambda ctx, btn: self._unsubscribe(ctx.user_id()))
+    view.add_button(_('subscriptions.dialog.main.close_dialog')).connect(
+      lambda ctx, btn: (ctx.delete_message(), None)[1])
     return view

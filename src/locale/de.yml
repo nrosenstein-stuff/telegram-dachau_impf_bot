@@ -1,15 +1,40 @@
 
-welcome_message: Hallo {first_name}, willkommen bei {bot_name}. Sende /einstellungen um zu
-  konfigurieren, für welche Impfstoffe und Arztpraxen du Benachrichtigungen erhalten möchtest.
+conversation:
+  start: Hallo {first_name}, willkommen bei {bot_name}. Sende /einstellungen um zu
+    konfigurieren, für welche Impfstoffe und Arztpraxen du Benachrichtigungen erhalten möchtest.
 
-availability.single.long: |
-  Termine für <b>{vaccine_name}</b> bei <a href="{link}">{name}</a> sind an folgenden Tagen frei: {dates}
-availability.single.short: '<b>{vaccine_name}</b> bei <a href="{link}">{location}</a>: {dates}'
-availability.summary.header: 'Zuletzt bekannte Impftermine (Verfügbarkeit kann sich in der Zwischenzeit geändert haben):'
+emoji:
+  enabled: ✅
+  enabled_implicit: ⚡
 
-vaccine_type.BIONTECH: 'BioNTech'
-vaccine_type.ASTRA_ZENECA: 'AstraZeneca'
-vaccine_type.JOHNSON_AND_JOHNSON: 'Johnson+Johnson'
-vaccine_round.any: '(allg. Impfung)'
-vaccine_round.one: '1. Impfung'
-vaccine_round.two: '2. Impfung'
+subscriptions:
+  dialog:
+    general:
+      all: Alle
+      back: << Zurück
+    main:
+      message: Hier kannst du auswählen, für welche Impfstoffe und Arztpraxen ich dir Benachrichtigungen schicken soll.
+      choose_vaccination_centers: Arztpraxen wählen
+      choose_vaccine_rounds: Impfstoffe wählen
+      unsubscribe_all: Benachrichtigungen ausschalten
+      close_dialog: Dialog schließen
+    choose_vaccination_centers:
+      message: Hier kannst du Arztpraxen an- und abwählen für die ich dir Nachrichten schicken werden.
+    choose_vaccine_rounds:
+      message: Hier kannst du Impfstoffe an- und abwählen für die ich dir Nachrichten schicken werden.
+    responses:
+      unsubscribed: Du erhältst jetzt keine Benachrichtigungen mehr. Sende jederzeit /einstellungen
+        um deine Einstellungen zu ändern.
+
+notification:
+  immediate: 'Termine für <b>{vaccine_name}</b> bei <a href="{link}">{name}</a> sind an folgenden Tagen frei: {dates}'
+
+vaccine_type:
+  BIONTECH: 'BioNTech'
+  ASTRA_ZENECA: 'AstraZeneca'
+  JOHNSON_AND_JOHNSON: 'Johnson+Johnson'
+
+vaccine_round:
+  any: '(allg. Impfung)'
+  one: '1. Impfung'
+  two: '2. Impfung'

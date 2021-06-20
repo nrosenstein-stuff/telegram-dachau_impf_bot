@@ -20,10 +20,16 @@ class Locale:
     self._data: t.Dict[str, str] = yaml.safe_load(open(filename))  # TODO
 
   def get(self, key: str, **kwargs) -> str:
-    if key not in self._data:
-      logger.warn('Missing locale key in "%s": %s', self._filename, key)
+    data = self._data
+    for part in key.split('.'):
+      if not isinstance(data, t.Mapping) or part not in data:
+        logger.warn('Missing locale key in "%s": %s (%s)', self._filename, key, part)
+        return '<?>'
+      data = data[part]
+    if not isinstance(data, str):
+      logger.warn('Missing locale key in "%s": %s (%s)', self._filename, key, part)
       return '<?>'
-    return Template(self._data[key])(**kwargs)
+    return Template(data)(**kwargs)
 
 
 _gl: t.Optional[Locale] = None
