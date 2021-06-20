@@ -103,9 +103,9 @@ class DachauMedPlugin(IPlugin):
 
   def get_vaccination_centers(self) -> t.Sequence['IVaccinationCenter']:
     salons = reduce(lambda a, b: a + b, [
-      #_get_salons(JNJ_URL, VaccineRound(VaccineType.JOHNSON_AND_JOHNSON, 0)) + \
-      #_get_salons(ASTRA_2_URL, VaccineRound(VaccineType.ASTRA_ZENECA, 2)) + \
-      #_get_salons(BIONTECH_1_URL, VaccineRound(VaccineType.BIONTECH, 1)) + \
+      _get_salons(JNJ_URL, VaccineRound(VaccineType.JOHNSON_AND_JOHNSON, 0)) + \
+      _get_salons(ASTRA_2_URL, VaccineRound(VaccineType.ASTRA_ZENECA, 2)) + \
+      _get_salons(BIONTECH_1_URL, VaccineRound(VaccineType.BIONTECH, 1)) + \
       _get_salons(BIONTECH_2_URL, VaccineRound(VaccineType.BIONTECH, 2))
     ])
 
@@ -140,12 +140,6 @@ class DachauMedVaccinationCenter(IVaccinationCenter):
     return VaccinationCenter(self.id, self.name, 'https://termin.dachau-med.de/', 'Landkreis Dachau')
 
   def check_availability(self) -> t.Dict[VaccineRound, AvailabilityInfo]:
-
-    if 'mvzdachaueg' in self.id:
-      return {
-        VaccineRound(VaccineType.BIONTECH, 2): AvailabilityInfo(dates=[datetime.date(2021, 6, 23)])
-      }
-
     result = {}
     for salon in self.salons:
       try:
