@@ -125,7 +125,7 @@ class SubscriptionManager:
       'Impfstoffe auswählst\\. Schicke hierzu einfach wieder /einstellungen an mich\\.')
 
   def get_root_view(self, user_id: int) -> tgui.View:
-    view = tgui.View('Benachrichtigungen konfigurieren')
+    view = tgui.View('Hier kannst du auswählen, für welche Impfstoffe und Arztpraxen ich dir Benachrichtigungen schicken soll.`')
     view.add_button('Praxen wählen').connect(lambda ctx, _b: self._get_vaccination_center_picker_view(ctx.user_id()))
     view.add_button('Impfstoffe wählen').connect(lambda ctx, btn: self._get_vaccine_type_picker_view(ctx.user_id()))
     view.add_button('Abbestellen').connect(lambda ctx, btn: self._unsubscribe(ctx.user_id()))

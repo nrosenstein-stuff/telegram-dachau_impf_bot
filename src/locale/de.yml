@@ -1,5 +1,6 @@
 
-welcome_message: Hallo {first_name}, willkommen beim {bot_name}.
+welcome_message: Hallo {first_name}, willkommen bei {bot_name}. Sende /einstellungen um zu
+  konfigurieren, für welche Impfstoffe und Arztpraxen du Benachrichtigungen erhalten möchtest.
 
 availability.single.long: |
   Termine für <b>{vaccine_name}</b> bei <a href="{link}">{name}</a> sind an folgenden Tagen frei: {dates}
