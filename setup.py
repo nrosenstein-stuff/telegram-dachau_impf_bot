@@ -24,10 +24,7 @@ requirements = [
   'databind.yaml >=0.1.3,<1.0.0',
 ]
 test_requirements = [
-  'sqlalchemy-stubs',
-  'types-cachetools',
-  'types-requests',
-  'types-pkg_resources',
+  'pytest',
 ]
 
 setuptools.setup(
