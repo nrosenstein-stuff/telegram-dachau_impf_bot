@@ -37,6 +37,15 @@ Der Bot sendet dir eine Nachricht, wenn bei https://termin.dachau-med.de/ Impfte
 
 Fragen, Probleme oder Anregungen? Gerne an @NiklasRosenstein. Du kannst den Quellcode dieses Telegram Bots auf GitHub finden: https://github.com/NiklasRosenstein/telegram-dachau_impf_bot
 
+## Changelog
+
+*Neu in Version 1.0.0*
+
+Um weiter Benachrichtigungen zu erhalten, musst du jetzt in deinen Einstellungen angeben, für
+welche Arztpraxen und Impfstoffe du dich interessierst. Sende dazu /einstellungen und folge einfach
+der Benutzeroberfläche. Du erhältst von jetzt an keine neuen Benachrichtigungen, bis du diese
+Einstellungen vorgenommen hast.
+
 ---
 
 <p align="center">Copyright &copy; 2021 Niklas Rosenstein</p>
