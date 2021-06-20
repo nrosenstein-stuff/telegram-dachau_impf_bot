@@ -22,10 +22,12 @@ requirements = [
   'bs4 >=0.0.1,<1.0.0',
   'databind.core >=0.11.0,<1.0.0',
   'databind.yaml >=0.1.3,<1.0.0',
-  'python-i18n[YAML] >=0.3.9,<1.0.0',
 ]
 test_requirements = [
   'sqlalchemy-stubs',
+  'types-cachetools',
+  'types-requests',
+  'types-pkg_resources',
 ]
 
 setuptools.setup(
