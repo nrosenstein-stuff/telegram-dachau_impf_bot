@@ -82,10 +82,10 @@ class SubscriptionManager:
 
   def _toggle_match_all(self, user_id: int) -> tgui.View:
     subscription = self.users.get_subscription(user_id)
-    if '' in subscription.vaccination_center_queries:
-      subscription.vaccination_center_queries.remove('')
+    if '%' in subscription.vaccination_center_queries:
+      subscription.vaccination_center_queries.remove('%')
     else:
-      subscription.vaccination_center_queries.append('')
+      subscription.vaccination_center_queries.append('%')
     return self._get_vaccination_center_picker_view(user_id, subscription)
 
   def _toggle_vaccination_center_id(self, user_id: int, center_id: str) -> tgui.View:
@@ -101,7 +101,7 @@ class SubscriptionManager:
     subscription = subscription or self.users.get_subscription(user_id)
     view = tgui.View('Praxen')
 
-    all_enabled = '' in subscription.vaccination_center_queries
+    all_enabled = '%' in subscription.vaccination_center_queries
     name = 'Alle'
     if all_enabled:
       name += ' ✅'
