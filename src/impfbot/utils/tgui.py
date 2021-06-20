@@ -107,10 +107,10 @@ class DefaultContext(IContext):
 
   def reply_markdown(self, text: str, markup: InlineKeyboardMarkup = None) -> None:
     if self._update.message:
-      self._update.message.reply_markdown_v2(text, reply_markup=markup)
+      self._update.message.reply_markdown(text, reply_markup=markup)
     elif self._update.callback_query:
       self._update.callback_query.edit_message_text(
-        text, parse_mode=ParseMode.MARKDOWN_V2, reply_markup=markup)
+        text, parse_mode=ParseMode.MARKDOWN, reply_markup=markup)
     else:
       assert False
 

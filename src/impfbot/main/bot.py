@@ -76,7 +76,7 @@ class Impfbot:
   def _command_start(self, update: Update, context: CallbackContext) -> None:
     if not update.message: return
     user = self._register_user_from_message(update.message)
-    update.message.reply_markdown_v2(_('welcome_mesage', first_name=user.first_name, bot_name=self.bot.name))
+    update.message.reply_markdown(_('welcome_mesage', first_name=user.first_name, bot_name=self.bot.name))
     self._command_config(update, context)
 
   def _command_config(self, update: Update, context: CallbackContext) -> None:
@@ -117,6 +117,6 @@ class Impfbot:
 
     for user in self.user_store.get_users():
       try:
-        self.bot.send_message(chat_id=user.chat_id, text=text, parse_mode=ParseMode.MARKDOWN_V2)
+        self.bot.send_message(chat_id=user.chat_id, text=text, parse_mode=ParseMode.MARKDOWN)
       except TelegramError:
         logger.exception('Could not send message to chat_id %s', user.chat_id)
