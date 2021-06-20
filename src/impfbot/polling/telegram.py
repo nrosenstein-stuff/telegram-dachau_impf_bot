@@ -61,21 +61,8 @@ class TelegramAvailabilityRecorder(api.IDataReceiver):
     self._session = session
     self._avail = avail
     self._dispatch_on_change = dispatch_on_change
-    self._recorded_vaccination_center_ids: t.Set[str] = set()
-
-  # def begin_polling(self) -> None:
-  #   self._recorded_vaccination_center_ids.clear()
-
-  # def end_polling_vaccination_centers(self) -> None:
-  #   # Remove any vaccination centers that we have not received metadata for.
-  #   with self._session:
-  #     for center in self._avail.search_vaccination_centers(None):
-  #       if center.id not in self._recorded_vaccination_center_ids:
-  #         self._avail.delete_vaccination_center(center.id)
-  #   self._recorded_vaccination_center_ids.clear()
 
   def on_vaccination_center(self, center: api.IVaccinationCenter) -> None:
-    self._recorded_vaccination_center_ids.add(center.get_metadata().id)
     with self._session:
       self._avail.upsert_vaccination_center(center.get_metadata())
 
@@ -93,13 +80,7 @@ class TelegramAvailabilityRecorder(api.IDataReceiver):
       last_data = self._avail.get_availability(vcenter.id, vaccine_round)
       self._avail.set_availability(vcenter.id, vaccine_round, data)
 
-    # TODO(NiklasRosenstein): Check if we ever sent this user a notiication for this
-    #   center/vaccine_round before. If we haven't, we want to dispatch the notification
-    #   anyway.
-    if set(data.dates).issubset(set(last_data.dates)):
-      if data.dates:
-        logger.info('Skipping notification dispatch because no new dates are available (dates: %s)', data.dates)
-    else:
+    if not set(data.dates).issubset(set(last_data.dates)):
       try:
         self._dispatch_on_change.on_availability_info_ready(center, vaccine_round, data)
       except Exception:

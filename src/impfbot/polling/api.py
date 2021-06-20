@@ -35,8 +35,6 @@ class IDataReceiver(metaclass=abc.ABCMeta):
 
   def begin_polling(self) -> None: ...
 
-  def end_polling_vaccination_centers(self) -> None: ...
-
   def end_polling(self) -> None: ...
 
   def on_vaccination_center(self, center: IVaccinationCenter) -> None: ...
@@ -63,13 +61,6 @@ class _DataReceiverDispatcher(IDataReceiver):
     for delegate in self._delegates:
       try:
         delegate.begin_polling()
-      except Exception:
-        logger.exception('An unexpected error occurred during dispatching.')
-
-  def end_polling_vaccination_centers(self) -> None:
-    for delegate in self._delegates:
-      try:
-        delegate.end_polling_vaccination_centers()
       except Exception:
         logger.exception('An unexpected error occurred during dispatching.')
 

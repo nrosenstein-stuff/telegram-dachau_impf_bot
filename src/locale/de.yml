@@ -16,6 +16,8 @@ subscriptions:
       back: << Zurück
     main:
       message: Hier kannst du auswählen, für welche Impfstoffe und Arztpraxen ich dir Benachrichtigungen schicken soll.
+      partial_subscription_warning: '*Achtung*: Dein Abonnement sind unvollständig. Du erhältst erst
+        Benachrichtigungen wenn du es vervollständigst.'
       choose_vaccination_centers: Arztpraxen
       choose_vaccine_rounds: Impfstoffe
       unsubscribe_all: Benachrichtigungen ausschalten
@@ -31,7 +33,7 @@ subscriptions:
         jederzeit ändern, um wieder Benachrichtigungen zu erhalten.
 
 notification:
-  immediate: 'Termine für <b>{vaccine_name}</b> bei <a href="{link}">{name}</a> sind an folgenden Tagen frei: {dates}'
+  immediate: '<b>{vaccine_name}</b> Tage mit freien Terminen bei <a href="{link}">{name}</a>: {dates}'
 
 vaccine_type:
   BIONTECH: 'BioNTech'

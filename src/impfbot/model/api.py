@@ -60,6 +60,9 @@ class Subscription:
   vaccination_center_ids: t.List[str] = field(default_factory=list)
   vaccination_center_queries: t.List[str] = field(default_factory=list)
 
+  def __bool__(self) -> bool:
+    return bool(self.vaccine_rounds or self.vaccination_center_ids or self.vaccination_center_queries)
+
 
 class IAvailabilityStore(metaclass=abc.ABCMeta):
 

@@ -125,14 +125,23 @@ class SubscriptionManager:
     return tgui.View(_('subscriptions.dialog.responses.unsubscribed'))
 
   def get_root_view(self, user_id: int) -> tgui.View:
-    view = tgui.View(_('subscriptions.dialog.main.message'))
+    subscription = self.users.get_subscription(user_id)
+
+    # Let the user know when they have a partial subscription.
+    msg = _('subscriptions.dialog.main.message')
+    if bool(subscription.vaccine_rounds) != bool(subscription.vaccination_center_ids or
+        subscription.vaccination_center_queries):
+      msg += '\n\n' + _('subscriptions.dialog.main.partial_subscription_warning')
+
+    view = tgui.View(msg)
     view.add_buttons(
       tgui.Button(_('subscriptions.dialog.main.choose_vaccination_centers')).connect(
         lambda ctx, _b: self._get_vaccination_center_picker_view(ctx.user_id())),
       tgui.Button(_('subscriptions.dialog.main.choose_vaccine_rounds')).connect(
         lambda ctx, btn: self._get_vaccine_type_picker_view(ctx.user_id()))
     )
-    view.add_button(_('subscriptions.dialog.main.unsubscribe_all')).connect(
-      lambda ctx, btn: self._unsubscribe(ctx.user_id()))
+    if subscription:
+      view.add_button(_('subscriptions.dialog.main.unsubscribe_all')).connect(
+        lambda ctx, btn: self._unsubscribe(ctx.user_id()))
     view.add_button(_('subscriptions.dialog.main.close_dialog')).connect(lambda ctx, btn: None)
     return view
