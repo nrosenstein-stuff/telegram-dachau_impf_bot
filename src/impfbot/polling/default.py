@@ -26,8 +26,8 @@ class DefaultPoller:
   def poll_once(self) -> None:
     dispatcher = api.IDataReceiver.Dispatcher(self.receivers)
     dispatcher.begin_polling()
-    centers = []
     try:
+      centers: t.List[api.IVaccinationCenter] = []
       for plugin in self.plugins:
         logger.info('Polling vaccination centers for %s', plugin)
         try:

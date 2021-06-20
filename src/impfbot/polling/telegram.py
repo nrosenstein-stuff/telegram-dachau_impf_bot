@@ -97,7 +97,8 @@ class TelegramAvailabilityRecorder(api.IDataReceiver):
     #   center/vaccine_round before. If we haven't, we want to dispatch the notification
     #   anyway.
     if set(data.dates).issubset(set(last_data.dates)):
-      logger.info('Skipping notification dispatch because no new dates are available.')
+      if data.dates:
+        logger.info('Skipping notification dispatch because no new dates are available (dates: %s)', data.dates)
     else:
       try:
         self._dispatch_on_change.on_availability_info_ready(center, vaccine_round, data)
