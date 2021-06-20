@@ -22,10 +22,10 @@ $ docker-compose up -d
 ### Available Commands
 
 ```
-einstellungen - Gib an für welche Praxen und Impfstoofe du Nachrichten bekommen möchtest.
+einstellungen - Konfiguriere die Arztpraxen und Impfstoffe für die du Benachrichtigungen erhalten möchtest.
 ```
 
-### Bot About
+### Bot About (<=120 characters)
 
 Sagt dir bescheid wenn im Landkreis Dachau und Umgebung Impftermine frei werden. Fragen, etc. an @NiklasRosenstein
 
@@ -33,7 +33,7 @@ Sagt dir bescheid wenn im Landkreis Dachau und Umgebung Impftermine frei werden.
 
 Der Bot sendet dir eine Nachricht, wenn bei https://termin.dachau-med.de/ Impftermine frei werden.
 
-Fragen, Probleme oder Anregungen? Gerne an @NiklasRosenstein
+Fragen, Probleme oder Anregungen? Gerne an @NiklasRosenstein. Du kannst den Quellcode dieses Telegram Bots auf GitHub finden: https://github.com/NiklasRosenstein/telegram-dachau_impf_bot
 
 ---
 
