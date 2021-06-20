@@ -28,12 +28,14 @@ class DefaultTest(TestCase):
       self.u1 = User(42, 42, 'u1')
       self.u2 = User(532, 532, 'u2')
       self.u3 = User(214, 214, 'u3')
+      self.u4 = User(214, 214, 'u4')
       self.users.register_user(self.u1)
       self.users.subscribe_user(self.u1.id, Subscription(vaccine_rounds=[(VaccineType.BIONTECH, 1)]))
       self.users.register_user(self.u2)
       self.users.subscribe_user(self.u2.id, Subscription(vaccination_center_ids=['xyz']))
       self.users.register_user(self.u3)
       self.users.subscribe_user(self.u3.id, Subscription(vaccination_center_queries=['heim']))
+      self.users.register_user(self.u4)
 
   def test_search_vaccination_centers(self):
     self.setup_test_centers()

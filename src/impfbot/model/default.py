@@ -196,6 +196,9 @@ class DefaultUserStore(IUSerStore):
     else:
       vaccine_round_filter = (db.SubscriptionV1.vaccine_round == vaccine_round[1])
 
+    # TODO(NiklasRosenstein): Users with no subscription entries at all should not match
+    #   any vaccine_center/vaccine_round.
+
     query = self._session().query(db.VaccinationCenterV1, db.UserV1)\
       .filter(db.VaccinationCenterV1.id == vaccination_center_id)\
       .join(db.SubscriptionV1)\
