@@ -110,6 +110,12 @@ class DefaultUserStore(IUSerStore):
       return User(userv1.id, userv1.chat_id, userv1.first_name), False
     return None, False
 
+  def get_user_count(self, with_subscription_only: bool) -> int:
+    query = self._session().query(db.UserV1)
+    if with_subscription_only:
+      query = query.join(db.SubscriptionV1).filter(db.SubscriptionV1.id != None)
+    return query.distinct(db.UserV1.id).count()
+
   def register_user(self, user: User) -> None:
     has_user, in_old_table = self._get_user(user.id)
     if not has_user or in_old_table or has_user != user:

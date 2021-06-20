@@ -1,9 +1,9 @@
 
-import i18n
 import logging
 from telegram import Bot, TelegramError, ParseMode
 
 from impfbot import model
+from impfbot.utils.locale import get as _
 from . import api
 
 logger = logging.getLogger(__name__)
@@ -38,10 +38,10 @@ class TelegramAvailabilityDispatcher(api.IDataReceiver):
         try:
           self._bot.send_message(
             chat_id=user.chat_id,
-            text=i18n.t('availability.single.long',
+            text=_('availability.single.long',
               vaccine_name=vaccine_round.to_text(),
               link=vcenter.url,
-              location=vcenter.location,
+              name=vcenter.name,
               dates=', '.join(d.strftime('%Y-%m-%d') for d in data.dates)),
             parse_mode=ParseMode.HTML,
           )
@@ -79,6 +79,9 @@ class TelegramAvailabilityRecorder(api.IDataReceiver):
       last_data = self._avail.get_availability(vcenter.id, vaccine_round)
       self._avail.set_availability(vcenter.id, vaccine_round, data)
 
+    # TODO(NiklasRosenstein): Check if we ever sent this user a notiication for this
+    #   center/vaccine_round before. If we haven't, we want to dispatch the notification
+    #   anyway.
     if not set(data.dates).issubset(set(last_data.dates)):
       try:
         self._dispatch_on_change.on_availability_info_ready(center, vaccine_round, data)

@@ -87,6 +87,9 @@ class IAvailabilityStore(metaclass=abc.ABCMeta):
 class IUSerStore(metaclass=abc.ABCMeta):
 
   @abc.abstractmethod
+  def get_user_count(self, with_subscription_only: bool) -> int: ...
+
+  @abc.abstractmethod
   def register_user(self, user: User) -> None: ...
 
   @abc.abstractmethod

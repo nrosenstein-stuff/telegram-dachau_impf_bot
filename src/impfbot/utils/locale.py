@@ -2,7 +2,7 @@
 import collections
 import logging
 import typing as t
-import yaml
+import yaml  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ class Locale:
 
   def __init__(self, filename: str) -> None:
     self._filename = filename
-    self._data = yaml.safe_load(open(filename))  # TODO
+    self._data: t.Dict[str, str] = yaml.safe_load(open(filename))  # TODO
 
   def get(self, key: str, **kwargs) -> str:
     if key not in self._data:

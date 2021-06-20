@@ -1,6 +1,7 @@
 
 import cachetools
 import datetime
+import logging
 import threading
 import typing as t
 from telegram import Update
@@ -17,6 +18,7 @@ from impfbot.utils import tgui
 from .config import Config
 from .sub import SubscriptionManager
 
+logger = logging.getLogger(__name__)
 
 
 class Impfbot:
@@ -55,6 +57,7 @@ class Impfbot:
   def init_commands(self) -> None:
     self.add_command('start', self._command_start)
     self.add_command('einstellungen', self._command_config)
+    self.add_command('adm', self._command_admin)
     self.telegram_updater.dispatcher.add_handler(CallbackQueryHandler(self._callback_query_handler))
 
   def mainloop(self) -> None:
@@ -86,8 +89,7 @@ class Impfbot:
       tgui.dispatch(ctx)
 
   def _command_admin(self, update: Update, context: CallbackContext) -> None:
-    return
-    if not update.message or update.message.chat_id != self._config.admin_chat_id:
+    if not update.message or update.message.chat_id != self.config.admin_chat_id:
       return
 
     try:
@@ -97,10 +99,9 @@ class Impfbot:
       # TODO: Capture parser output to stderr
       args = parser.parse_args(shlex.split(update.message.text.replace('—', '--'))[1:])
     except BaseException:
-      self._dispatch_to_admin(f'Error executing {update.message.text}', traceback.format_exc())
+      logger.exception('Error executing admin command %r', update.message.text)
 
     if args.stats:
-      with model.session() as session:
-        registered_users = session.query(model.UserRegistration).count()
-        subscribed_users = session.query(model.UserRegistration).filter(model.UserRegistration.subscription_active == True).count()
-      update.message.reply_text(f'Registered users: {registered_users}, subscribed: {subscribed_users}')
+      update.message.reply_text(\
+        f'Number of registered users: {self.user_store.get_user_count(False)}\n'
+        f'NUmber of users with active subscriptions: {self.user_store.get_user_count(True)}')
