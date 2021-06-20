@@ -44,9 +44,9 @@ class ScopedSession(ISessionProvider):
     self._local.append(session)
     return session
 
-  def __exit__(self, exc_t, exc_v, exc_tb) -> None:
+  def __exit__(self, exc_type, _exc_value, _exc_tb) -> None:
     session = self._local.pop()
-    if exc_tb is None:
+    if exc_type is None:
       session.commit()
     else:
       session.rollback()

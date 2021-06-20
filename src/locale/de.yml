@@ -1,3 +1,6 @@
+
+welcome_message: Hallo {first_name}, willkommen beim {bot_name}.
+
 subscribe.ok: 'Hallo {first_name}, ich werde dir Bescheid geben sobald Impftermine verfügbar sind. Sende mir eine Nachricht mit "/abmelden" um keine Benachrichtigungen mehr zu erhalten.'
 subscribe.already_subscribed: 'Du bist bereits angemeldet.'
 unsubscribe.ok: '{first_name}, ich werde dir keine Benachrichtigungen mehr senden.'

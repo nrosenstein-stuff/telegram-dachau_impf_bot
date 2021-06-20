@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class Template(str):
 
   def __call__(self, **params) -> str:
-    return self.format_map(collections.defaultdict(lambda: '<?>', params))
+    return self.replace('\\\n', '').format_map(collections.defaultdict(lambda: '<?>', params))
 
 
 class Locale:

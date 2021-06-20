@@ -1,4 +1,5 @@
 
+import cachetools
 import datetime
 import threading
 import typing as t
@@ -11,6 +12,8 @@ from impfbot.model.default import DefaultAvailabilityStore, DefaultUserStore
 from impfbot.polling.api import IPlugin
 from impfbot.polling.default import DefaultPoller
 from impfbot.polling.telegram import TelegramAvailabilityDispatcher, TelegramAvailabilityRecorder
+from impfbot.utils.locale import get as _
+from impfbot.utils import tgui
 from .config import Config
 from .sub import SubscriptionManager
 
@@ -22,6 +25,7 @@ class Impfbot:
     self.session = ScopedSession()
     self.config = config
     self.telegram_updater = Updater(config.token)
+    self.bot = self.telegram_updater.bot
     self.poller = DefaultPoller(datetime.timedelta(seconds=config.check_period))
     self.poller.plugins += IPlugin.load_plugins()
     self.availability_store = DefaultAvailabilityStore(self.session, datetime.timedelta(hours=72))
@@ -39,6 +43,7 @@ class Impfbot:
       )
     )
     self.subs = SubscriptionManager(self.availability_store, self.user_store)
+    self.tgui_action_store = tgui.DefaultActionStore(cachetools.TTLCache(2**16, ttl=3600 * 24))
     self.init_commands()
 
   def add_command(self, name: str, handler_func: t.Callable) -> None:
@@ -49,10 +54,7 @@ class Impfbot:
 
   def init_commands(self) -> None:
     self.add_command('start', self._command_start)
-    self.add_command('status', self._command_status)
-    self.add_command('anmelden', self._command_subscribe)
-    self.add_command('abmelden', self._command_unsubscribe)
-    self.add_command('adm', self._command_admin)
+    self.add_command('einstellungen', self._command_config)
     self.telegram_updater.dispatcher.add_handler(CallbackQueryHandler(self._callback_query_handler))
 
   def mainloop(self) -> None:
@@ -60,86 +62,28 @@ class Impfbot:
     self.telegram_updater.start_polling()
     self.telegram_updater.idle()
 
-  def _register_user_from_message(self, message: Message) -> None:
-    if not message.from_user: return
+  def _register_user_from_message(self, message: Message) -> User:
+    assert message.from_user
     from_user = message.from_user
-    self.user_store.register_user(User(from_user.id, message.chat_id, from_user.first_name))
+    user = User(from_user.id, message.chat_id, from_user.first_name)
+    self.user_store.register_user(user)
+    return user
 
   def _command_start(self, update: Update, context: CallbackContext) -> None:
     if not update.message: return
-    self._register_user_from_message(update.message)
+    user = self._register_user_from_message(update.message)
+    update.message.reply_markdown_v2(_('welcome_mesage', first_name=user.first_name, bot_name=self.bot.name))
+    self._command_config(update, context)
 
-  def _command_status(self, update: Update, context: CallbackContext) -> None:
+  def _command_config(self, update: Update, context: CallbackContext) -> None:
     if not update.message: return
-
-    """
-    at_least_one_result = False
-    with model.session() as session:
-      for center in session.query(model.VaccinationCenterByType):
-        if center.num_available_dates <= 0: continue
-        if not at_least_one_result:
-          update.message.reply_markdown(Text.AVAILABLE_SLOTS_HEADER())
-        at_least_one_result = True
-        vaccine_type, info = center.availability_info()
-        center_data = next((x for x in self._centers if x.uid == center.id), None)
-        if not center_data:
-          logger.warn('Could not find name for center with id %s', center.id)
-          continue
-        self._dispatch(
-          center_data.name,
-          center_data.url,
-          vaccine_type,
-          info.dates,
-          recipient_chat_id=update.message.chat_id,
-          is_retro=True)
-    if not at_least_one_result:
-      update.message.reply_markdown(Text.NO_SLOTS_AVAILABLE())
-    """
-
-  def _command_subscribe(self, update: Update, context: CallbackContext) -> None:
-    if not update.message: return
-    self._register_user_from_message(update.message)
-    self.subs.respond(update)
+    ctx = tgui.DefaultContext(self.tgui_action_store, update)
+    self.subs.get_root_view(ctx.user_id()).respond(ctx)
 
   def _callback_query_handler(self, update: Update, context: CallbackContext) -> None:
     with self.session:
-      self.subs.respond(update)
-
-    """
-    user = update.message.from_user
-    assert user
-    with model.session() as session:
-      has_user = session.query(model.UserRegistration).filter(model.UserRegistration.id == user.id).first()
-      if has_user and has_user.subscription_active:
-        update.message.reply_markdown(Text.SUBSCRIBE_DUPLICATE(first_name=user.first_name))
-        return
-      if has_user:
-        has_user.subscription_active = True
-      else:
-        session.add(model.UserRegistration(
-          id=user.id,
-          first_name=user.first_name,
-          chat_id=update.message.chat_id,
-          subscription_active=True,
-          registered_at=datetime.datetime.now()))
-      session.commit()
-      update.message.reply_markdown(Text.SUBSCRIBE_OK(first_name=user.first_name))
-      self._status(update, context)
-      """
-
-  def _command_unsubscribe(self, update: Update, context: CallbackContext) -> None:
-    return
-    assert update.message
-    user = update.message.from_user
-    assert user
-    with model.session() as session:
-      has_user = session.query(model.UserRegistration).filter(model.UserRegistration.id == user.id).first()
-      if not has_user:
-        update.message.reply_markdown(Text.UNSUBSCRIBE_ENOENT(first_name=user.first_name))
-        return
-      has_user.subscription_active = False
-      session.commit()
-      update.message.reply_markdown(Text.UNSUBSCRIBE_OK(first_name=user.first_name))
+      ctx = tgui.DefaultContext(self.tgui_action_store, update)
+      tgui.dispatch(ctx)
 
   def _command_admin(self, update: Update, context: CallbackContext) -> None:
     return
