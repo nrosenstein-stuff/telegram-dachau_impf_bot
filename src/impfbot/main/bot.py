@@ -29,9 +29,9 @@ class Impfbot:
     self.config = config
     self.telegram_updater = Updater(config.token)
     self.bot = self.telegram_updater.bot
-    self.poller = DefaultPoller(datetime.timedelta(seconds=config.check_period))
+    self.poller = DefaultPoller(datetime.timedelta(seconds=config.check_period_in_s))
     self.poller.plugins += IPlugin.load_plugins()
-    self.availability_store = DefaultAvailabilityStore(self.session, datetime.timedelta(hours=72))
+    self.availability_store = DefaultAvailabilityStore(self.session, datetime.timedelta(hours=config.retention_period_in_h))
     self.user_store = DefaultUserStore(self.session)
     self.poller.receivers.append(
       TelegramAvailabilityRecorder(
