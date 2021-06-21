@@ -25,6 +25,7 @@ $ docker-compose up -d
 
 ```
 einstellungen - Konfiguriere die Arztpraxen und Impfstoffe für die du Benachrichtigungen erhalten möchtest.
+info - Zeige informationen über den Bot an.
 ```
 
 ### Bot About (<=120 characters)

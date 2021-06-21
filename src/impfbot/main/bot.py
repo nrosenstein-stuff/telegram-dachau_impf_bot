@@ -9,6 +9,7 @@ from telegram import Update, ParseMode, TelegramError
 from telegram.ext import CallbackContext, CommandHandler, Updater, CallbackQueryHandler
 from telegram.message import Message
 
+from impfbot import __version__
 from impfbot.model import ScopedSession, User
 from impfbot.model.default import DefaultAvailabilityStore, DefaultUserStore
 from impfbot.polling.api import IPlugin
@@ -58,6 +59,7 @@ class Impfbot:
   def init_commands(self) -> None:
     self.add_command('start', self._command_start)
     self.add_command('einstellungen', self._command_config)
+    self.add_command('info', self._command_info)
     self.add_command('adm', self._command_admin)
     self.add_command('broadcast', self._command_broadcast)
     self.add_command('broadcast4real', self._command_broadcast)
@@ -85,6 +87,15 @@ class Impfbot:
     if not update.message: return
     ctx = tgui.DefaultContext(self.tgui_action_store, update)
     self.subs.get_root_view(ctx.user_id()).respond(ctx)
+
+  def _command_info(self, update: Update, context: CallbackContext) -> None:
+    if not update.message: return
+    update.message.reply_html(
+      f'{self.bot.name}, Version {__version__}\n'
+      'Entwickelt von @NiklasRosenstein. Quellcode auf '
+      '<a href="https://github.com/NiklasRosenstein/telegram-dachau_impf_bot">Github</a>',
+      disable_web_page_preview =True
+    )
 
   def _callback_query_handler(self, update: Update, context: CallbackContext) -> None:
     with self.session:
