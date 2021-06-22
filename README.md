@@ -27,6 +27,13 @@ Sagt dir bescheid wenn im Landkreis Dachau und Umgebung Impftermine frei werden.
 
 ## Changelog
 
+*Neu in Version 1.1.0*
+
+Jetzt kannst du mit dem Kommando /termine einsehen, welche zuletzt bekannten
+freien Termine zu deinen Einstellungen passen. Dies ist nützlich, wenn du
+eben erst deine Einstellungen angepasst hast, oder wenn du sehen willst, ob
+freie Termine aus einer vorherigen Benachrichtigung noch verfügbar sind.
+
 *Neu in Version 1.0.0*
 
 Um weiter Benachrichtigungen zu erhalten, musst du jetzt in deinen Einstellungen angeben, für
