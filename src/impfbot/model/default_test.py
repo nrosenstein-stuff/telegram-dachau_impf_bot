@@ -104,12 +104,18 @@ class DefaultTest(TestCase):
         AvailabilityInfo(dates=[datetime.date(2021, 7, 2)]))
       _register(self.avail4)
 
+      self.avail5 = (
+        self.xyz,
+        VaccineRound(VaccineType.JOHNSON_AND_JOHNSON, 0),
+        AvailabilityInfo(dates=[]))
+      _register(self.avail5)
+
   def test_get_relevant_availability_for_user(self) -> None:
     self.setup_test_centers()
     self.setup_test_users()
     self.setup_test_availability()
     with self.scoped_session:
-      #assert self.users.get_relevant_availability_for_user(self.u1.id) == []
-      #assert self.users.get_relevant_availability_for_user(self.u2.id) == []
+      assert self.users.get_relevant_availability_for_user(self.u1.id) == []
+      assert self.users.get_relevant_availability_for_user(self.u2.id) == []
       assert self.users.get_relevant_availability_for_user(self.u3.id) == [self.avail1, self.avail4]
-      #assert self.users.get_relevant_availability_for_user(self.u4.id) == []
+      assert self.users.get_relevant_availability_for_user(self.u4.id) == []  # Does not match avail5 because it has no dates

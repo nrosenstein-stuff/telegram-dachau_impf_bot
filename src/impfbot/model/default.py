@@ -182,14 +182,19 @@ class DefaultUserStore(IUSerStore):
     user_id: t.Optional[int] = None,
   ) -> Query:
 
+    now = datetime.datetime.now()
     subs1 = db.aliased(db.SubscriptionV1)
     subs2 = db.aliased(db.SubscriptionV1)
     query = self._session().query(db.VaccinationCenterV1, db.UserV1)
+    query = query.filter(db.VaccinationCenterV1.expires > now)
     if vaccination_center_id:
       query = query.filter(db.VaccinationCenterV1.id == vaccination_center_id)
     else:
       query = query.join(db.VaccinationCenterAvailabilityV1).add_entity(db.VaccinationCenterAvailabilityV1)
+      query = query.filter(db.VaccinationCenterAvailabilityV1.expires > now)
+      query = query.filter(db.VaccinationCenterAvailabilityV1.num_dates > 0)
     query = query.join(subs1, subs1.user_id == db.UserV1.id).join(subs2, subs2.user_id == db.UserV1.id)
+    query = query.order_by(db.UserV1.id, db.VaccinationCenterV1.id, subs1.id, subs2.id)
 
     if user_id is not None:
       query = query.filter(db.UserV1.id == user_id)
@@ -209,7 +214,6 @@ class DefaultUserStore(IUSerStore):
       vaccine_round_filter
     )
 
-    #query = query.join(subs2, subs2.user_id == db.UserV1.id)
     if vaccination_center_id:
       vaccination_center_filter = vaccination_center_id
     else:
