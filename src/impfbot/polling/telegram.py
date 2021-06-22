@@ -48,7 +48,7 @@ class TelegramAvailabilityDispatcher(api.IDataReceiver):
           logger.exception('An error occurred when sending message to chat_id %s', user.chat_id)
 
   @staticmethod
-  def format_availability_html(self,
+  def format_availability_html(
     vcenter: model.VaccinationCenter,
     vaccine_round: model.VaccineRound,
     data: model.AvailabilityInfo

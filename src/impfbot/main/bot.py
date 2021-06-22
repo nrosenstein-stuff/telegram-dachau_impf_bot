@@ -113,26 +113,31 @@ class Impfbot:
       tgui.dispatch(ctx)
 
   def _command_admin(self, update: Update, context: CallbackContext) -> None:
-    if not update.message or update.message.chat_id != self.config.admin_chat_id:
+    if not update.message or not update.message.from_user: return
+    if not update.message or update.message.from_user.id not in self.config.admin_user_ids:
       return
 
-    try:
-      import argparse, shlex
-      parser = argparse.ArgumentParser()
-      parser.add_argument('--stats', action='store_true')
-      # TODO: Capture parser output to stderr
-      args = parser.parse_args(shlex.split((update.message.text or '').replace('—', '--'))[1:])
-    except BaseException:
-      logger.exception('Error executing admin command %r', update.message.text)
-
-    if args.stats:
-      update.message.reply_text(\
+    def _stats(ctx: tgui.IContext, *a) -> tgui.View:
+      assert update.message
+      update.message.reply_text(
         f'Number of registered users: {self.user_store.get_user_count(False)}\n'
-        f'NUmber of users with active subscriptions: {self.user_store.get_user_count(True)}')
+        f'Number of users with active subscriptions: {self.user_store.get_user_count(True)}')
+      return view
+
+    def _show_chat_id(ctx: tgui.IContext, *a) -> tgui.View:
+      assert update.message
+      update.message.reply_text(str(update.message.chat_id))
+      return view
+
+    view = tgui.View('Admin Interface')
+    view.add_button('User Statistics').connect(_stats)
+    view.add_button('Show Chat ID').connect(_show_chat_id)
+    ctx = tgui.DefaultContext(self.tgui_action_store, update)
+    view.respond(ctx)
 
   def _command_broadcast(self, update: Update, context: CallbackContext) -> None:
-    if not update.message or not update.message.text: return
-    if update.message.chat_id != self.config.admin_chat_id: return
+    if not update.message or not update.message.from_user or not update.message.text: return
+    if update.message.from_user.id not in self.config.admin_user_ids: return
 
     prefix = '/broadcast'
     prefix_4_real = '/broadcast4real'

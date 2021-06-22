@@ -8,8 +8,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import aliased, Session
 from sqlalchemy.orm.attributes import QueryableAttribute
-from sqlalchemy.sql.schema import ForeignKeyConstraint
-from sqlalchemy_repr import RepresentableBase
+from sqlalchemy_repr import RepresentableBase  # type: ignore
 from impfbot.model.api import AvailabilityInfo, User, VaccinationCenter, VaccineRound, VaccineType
 
 from impfbot.utils.local import LocalList
@@ -105,6 +104,7 @@ class VaccinationCenterV1(Base):
   expires = Column(DateTime, nullable=False)
 
   @staticmethod
+  @t.no_type_check  # ilike() type stubs expects str
   def construct_search_query(query_col: QueryableAttribute) -> Column:
     assert isinstance(query_col, QueryableAttribute), repr(query_col)
     query_col = '%' + query_col + '%'
@@ -141,6 +141,7 @@ class VaccinationCenterAvailabilityV1(Base):
     self.expires = expires
 
   def get_vaccine_round(self) -> VaccineRound:
+    assert self.vaccine_type is not None and self.vaccine_round is not None
     return VaccineRound(VaccineType[self.vaccine_type], self.vaccine_round)
 
   def get_availability_info(self) -> AvailabilityInfo:

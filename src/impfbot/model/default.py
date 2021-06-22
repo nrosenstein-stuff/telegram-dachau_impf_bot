@@ -200,7 +200,7 @@ class DefaultUserStore(IUSerStore):
       query = query.filter(db.UserV1.id == user_id)
 
     if vaccine_round is not None:
-      vaccine_type_filter = vaccine_round[0].name
+      vaccine_type_filter: t.Union[str, db.Column] = vaccine_round[0].name
       if vaccine_round[1] == 0:
         vaccine_round_filter = True
       else:
@@ -215,7 +215,7 @@ class DefaultUserStore(IUSerStore):
     )
 
     if vaccination_center_id:
-      vaccination_center_filter = vaccination_center_id
+      vaccination_center_filter: t.Union[str, db.Column] = vaccination_center_id
     else:
       vaccination_center_filter = db.VaccinationCenterV1.id
     query = query.filter((
