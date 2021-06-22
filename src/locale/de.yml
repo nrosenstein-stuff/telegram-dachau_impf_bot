@@ -5,13 +5,13 @@ conversation:
     Bevor du diese Konfiguration durchgeführt hast, werde ich dir keine Benachrichtigungen
     schicken.
   info_html: |
-    <b>{bot_name}</b> v{version} - Entwickelt von @NiklasRosenstein
+    <b>{bot_name}</b> v{version}
 
     <b>Über diesen Telegram Bot:</b>
     Der Bot sendet dir eine Nachricht, wenn bei https://termin.dachau-med.de/ Impftermine frei werden.
 
-    Fragen, Probleme oder Anregungen? Gerne an @NiklasRosenstein. Du kannst den Quellcode dieses \
-    Telegram Bots auf GitHub finden: https://github.com/NiklasRosenstein/telegram-dachau_impf_bot
+    Fragen, Probleme oder Anregungen? Schicke eine Nachricht an @NiklasRosenstein. Du kannst den \
+    Quellcode dieses Telegram Bots auf GitHub finden: https://github.com/NiklasRosenstein/telegram-dachau_impf_bot
 
     <b>Kommandos:</b>
     /einstellungen - Konfiguriere die Arztpraxen und Impfstoffe für die du Benachrichtigungen erhalten möchtest.
