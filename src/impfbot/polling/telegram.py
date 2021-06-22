@@ -41,15 +41,24 @@ class TelegramAvailabilityDispatcher(api.IDataReceiver):
         try:
           self._bot.send_message(
             chat_id=user.chat_id,
-            text=_('notification.immediate',
-              vaccine_name=vaccine_round.to_text(),
-              link=vcenter.url,
-              name=vcenter.name,
-              dates=', '.join(d.strftime('%Y-%m-%d') for d in data.dates)),
+            text=self.format_availability_html(vcenter, vaccine_round, data),
             parse_mode=ParseMode.HTML,
           )
-        except TelegramError as exc:
+        except TelegramError:
           logger.exception('An error occurred when sending message to chat_id %s', user.chat_id)
+
+  @staticmethod
+  def format_availability_html(self,
+    vcenter: model.VaccinationCenter,
+    vaccine_round: model.VaccineRound,
+    data: model.AvailabilityInfo
+  ) -> str:
+
+    return _('notification.immediate',
+      vaccine_name=vaccine_round.to_text(),
+      link=vcenter.url,
+      name=vcenter.name,
+      dates=', '.join(d.strftime('%Y-%m-%d') for d in data.dates))
 
 
 class TelegramAvailabilityRecorder(api.IDataReceiver):

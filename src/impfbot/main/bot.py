@@ -59,6 +59,7 @@ class Impfbot:
   def init_commands(self) -> None:
     self.add_command('start', self._command_start)
     self.add_command('einstellungen', self._command_config)
+    self.add_command('termine', self._command_availability)
     self.add_command('info', self._command_info)
     self.add_command('adm', self._command_admin)
     self.add_command('broadcast', self._command_broadcast)
@@ -90,12 +91,21 @@ class Impfbot:
 
   def _command_info(self, update: Update, context: CallbackContext) -> None:
     if not update.message: return
-    update.message.reply_html(
-      f'{self.bot.name}, Version {__version__}\n'
-      'Entwickelt von @NiklasRosenstein. Der Quellcode diese Telegram Bots ist auf '
-      '<a href="https://github.com/NiklasRosenstein/telegram-dachau_impf_bot">Github</a> zu finden.',
-      disable_web_page_preview =True
-    )
+    message = _('conversation.info_html', bot_name=self.bot.name[1:], version=__version__)
+    update.message.reply_html(message, disable_web_page_preview =True)
+
+  def _command_availability(self, update: Update, context: CallbackContext) -> None:
+    if not update.message or not update.message.from_user: return
+    user_id = update.message.from_user.id
+    availability = self.user_store.get_relevant_availability_for_user(user_id)
+    lines = []
+    for vcenter, vaccine_round, data in availability:
+      lines.append(TelegramAvailabilityDispatcher.format_availability_html(vcenter, vaccine_round, data))
+    if lines:
+      lines.insert(0, _('conversation.summary_header'))
+    else:
+      lines.append(_('conversation.no_availability'))
+    update.message.reply_html('\n'.join(lines))
 
   def _callback_query_handler(self, update: Update, context: CallbackContext) -> None:
     with self.session:
