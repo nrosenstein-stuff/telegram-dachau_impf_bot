@@ -92,8 +92,8 @@ class Impfbot:
     if not update.message: return
     update.message.reply_html(
       f'{self.bot.name}, Version {__version__}\n'
-      'Entwickelt von @NiklasRosenstein. Quellcode auf '
-      '<a href="https://github.com/NiklasRosenstein/telegram-dachau_impf_bot">Github</a>',
+      'Entwickelt von @NiklasRosenstein. Der Quellcode diese Telegram Bots ist auf '
+      '<a href="https://github.com/NiklasRosenstein/telegram-dachau_impf_bot">Github</a> zu finden.',
       disable_web_page_preview =True
     )
 

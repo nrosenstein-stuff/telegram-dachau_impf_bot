@@ -33,7 +33,7 @@ subscriptions:
         jederzeit ändern, um wieder Benachrichtigungen zu erhalten.
 
 notification:
-  immediate: '<b>{vaccine_name}</b> Tage mit freien Terminen bei <a href="{link}">{name}</a>: {dates}'
+  immediate: 'Es wurden Termine frei für die <b>{vaccine_name}</b> bei <a href="{link}">{name}</a>: {dates}'
 
 vaccine_type:
   BIONTECH: 'BioNTech'
