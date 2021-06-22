@@ -75,3 +75,41 @@ class DefaultTest(TestCase):
         'xyz', VaccineRound(VaccineType.ASTRA_ZENECA, 1))) == set([])
       assert set(self.users.get_users_subscribed_to(
         'xyz', VaccineRound(VaccineType.JOHNSON_AND_JOHNSON, 0))) == set([self.u4])
+
+  def setup_test_availability(self) -> None:
+    def _register(v: t.Tuple[VaccinationCenter, VaccineRound, AvailabilityInfo]) -> None:
+      self.avail.set_availability(v[0].id, v[1], v[2])
+    with self.scoped_session:
+      self.avail1 = (
+        self.abc,
+        VaccineRound(VaccineType.BIONTECH, 1),
+        AvailabilityInfo(dates=[datetime.date(2021, 6, 21), datetime.date(2021, 6, 22)]))
+      _register(self.avail1)
+
+      self.avail2 = (
+        self.abc,
+        VaccineRound(VaccineType.BIONTECH, 2),
+        AvailabilityInfo(dates=[datetime.date(2021, 6, 28)]))
+      _register(self.avail2)
+
+      self.avail3 = (
+        self.abc,
+        VaccineRound(VaccineType.JOHNSON_AND_JOHNSON, 0),
+        AvailabilityInfo(dates=[datetime.date(2021, 6, 22), datetime.date(2021, 6, 23)]))
+      _register(self.avail3)
+
+      self.avail4 = (
+        self.xyz,
+        VaccineRound(VaccineType.BIONTECH, 1),
+        AvailabilityInfo(dates=[datetime.date(2021, 7, 2)]))
+      _register(self.avail4)
+
+  def test_get_relevant_availability_for_user(self) -> None:
+    self.setup_test_centers()
+    self.setup_test_users()
+    self.setup_test_availability()
+    with self.scoped_session:
+      #assert self.users.get_relevant_availability_for_user(self.u1.id) == []
+      #assert self.users.get_relevant_availability_for_user(self.u2.id) == []
+      assert self.users.get_relevant_availability_for_user(self.u3.id) == [self.avail1, self.avail4]
+      #assert self.users.get_relevant_availability_for_user(self.u4.id) == []

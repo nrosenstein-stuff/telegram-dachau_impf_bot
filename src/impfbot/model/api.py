@@ -125,3 +125,11 @@ class IUSerStore(metaclass=abc.ABCMeta):
     split the request into multiple calls, but you will need to count the number of already read
     results yourself.
     """
+
+  @abc.abstractmethod
+  def get_relevant_availability_for_user(self, user_id: int
+    ) -> t.List[t.Tuple[VaccinationCenter, VaccineRound, AvailabilityInfo]]:
+    """
+    Find the vaccination centers and rounds with availability currently known that match the
+    user's subscriptions.
+    """

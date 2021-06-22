@@ -238,3 +238,14 @@ class DefaultUserStore(IUSerStore):
     for _vcenter, user in query:
       result.append(user.to_api())
     return result
+
+  def get_relevant_availability_for_user(self, user_id: int,
+  ) -> t.List[t.Tuple[VaccinationCenter, VaccineRound, AvailabilityInfo]]:
+
+    query = self._subscription_query(None, None, user_id)
+    result = []
+    vcenter: db.VaccinationCenterV1
+    availability: db.VaccinationCenterAvailabilityV1
+    for vcenter, _user, availability in query:
+      result.append((vcenter.to_api(), availability.get_vaccine_round(), availability.get_availability_info()))
+    return result
