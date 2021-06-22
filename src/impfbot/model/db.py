@@ -1,11 +1,16 @@
 
 import abc
+import datetime
 import enum
 import typing as t
 from sqlalchemy import create_engine, Column, DateTime, Integer, String, ForeignKey, JSON
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import aliased, Session
+from sqlalchemy.orm.attributes import QueryableAttribute
+from sqlalchemy.sql.schema import ForeignKeyConstraint
+from sqlalchemy_repr import RepresentableBase
+from impfbot.model.api import AvailabilityInfo, User, VaccinationCenter, VaccineRound, VaccineType
 
 from impfbot.utils.local import LocalList
 
@@ -19,7 +24,7 @@ __all__ = [
 ]
 
 engine: t.Optional[Engine] = None
-Base = declarative_base()
+Base = declarative_base(cls=RepresentableBase)
 
 
 class ISessionProvider(metaclass=abc.ABCMeta):
@@ -100,22 +105,46 @@ class VaccinationCenterV1(Base):
   expires = Column(DateTime, nullable=False)
 
   @staticmethod
-  def construct_search_query(query_col):
+  def construct_search_query(query_col: QueryableAttribute) -> Column:
+    assert isinstance(query_col, QueryableAttribute), repr(query_col)
     query_col = '%' + query_col + '%'
     return VaccinationCenterV1.name.ilike(query_col) | \
            VaccinationCenterV1.location.ilike(query_col) | \
            VaccinationCenterV1.url.ilike(query_col)
 
+  def to_api(self) -> VaccinationCenter:
+    return VaccinationCenter(self.id, self.name, self.url, self.location)
+
+
 
 class VaccinationCenterAvailabilityV1(Base):
   __tablename__ = 'vav_v1'
 
-  vaccination_center_id = Column(String, primary_key=True)
+  vaccination_center_id = Column(String, ForeignKey(VaccinationCenterV1.id), primary_key=True)
   vaccine_type = Column(String, primary_key=True)
   vaccine_round = Column(Integer, primary_key=True, nullable=True)
   dates = Column(JSON, nullable=False)
   num_dates = Column(Integer, nullable=False)
   expires = Column(DateTime, nullable=False)
+
+  def __init__(self,
+    vaccination_center_id: str,
+    vaccine_round: VaccineRound,
+    availability_info: AvailabilityInfo,
+    expires: datetime.datetime
+  ) -> None:
+    self.vaccination_center_id = vaccination_center_id
+    self.vaccine_type = vaccine_round.type.name
+    self.vaccine_round = vaccine_round.round
+    self.dates = [dt.strftime('%Y-%m-%d') for dt in sorted(availability_info.dates)]
+    self.num_dates = len(self.dates)
+    self.expires = expires
+
+  def get_vaccine_round(self) -> VaccineRound:
+    return VaccineRound(VaccineType[self.vaccine_type], self.vaccine_round)
+
+  def get_availability_info(self) -> AvailabilityInfo:
+    return AvailabilityInfo(dates=[datetime.datetime.strptime(ds, '%Y-%m-%d').date() for ds in self.dates])
 
 
 class UserV1(Base):
@@ -125,6 +154,9 @@ class UserV1(Base):
   chat_id = Column(Integer, nullable=False)
   first_name = Column(String, nullable=False)
   registered_at = Column(DateTime, nullable=False)
+
+  def to_api(self) -> User:
+    return User(self.id, self.chat_id, self.first_name)
 
 
 class SubscriptionV1(Base):

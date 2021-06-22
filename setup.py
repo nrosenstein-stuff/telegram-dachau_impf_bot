@@ -17,6 +17,7 @@ else:
 
 requirements = [
   'sqlalchemy',
+  'sqlalchemy-repr',
   'python-telegram-bot',
   'requests',
   'bs4 >=0.0.1,<1.0.0',

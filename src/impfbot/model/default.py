@@ -2,16 +2,10 @@
 import datetime
 import typing as t
 
+from sqlalchemy.orm.query import Query
+
 from . import db
 from .api import AvailabilityInfo, VaccineRound, IAvailabilityStore, IUSerStore, Subscription, User, VaccinationCenter, VaccineType
-
-
-def dates_from_json(data: t.List[str]) -> t.List[datetime.date]:
-  return [datetime.datetime.strptime(x, '%Y-%m-%d').date() for x in data]
-
-
-def dates_to_json(dates: t.List[datetime.date]) -> t.List[str]:
-  return [dt.strftime('%Y-%m-%d') for dt in dates]
 
 
 class DefaultAvailabilityStore(IAvailabilityStore):
@@ -64,7 +58,7 @@ class DefaultAvailabilityStore(IAvailabilityStore):
 
     result = []
     for db_obj in query:
-      result.append(VaccinationCenter(db_obj.id, db_obj.name, db_obj.url, db_obj.location))
+      result.append(db_obj.to_api())
     return result
 
   def get_availability(self,
@@ -81,7 +75,7 @@ class DefaultAvailabilityStore(IAvailabilityStore):
         query = query.filter(db.VaccinationCenterAvailabilityV1.vaccine_round == vaccine_round[1])
     dates: t.Set[datetime.date] = set()
     for result in query:
-      dates.update(dates_from_json(t.cast(t.List[str], result.dates)))
+      dates.update(result.get_availability_info().dates)
     return AvailabilityInfo(dates=sorted(dates))
 
   def set_availability(self,
@@ -96,10 +90,8 @@ class DefaultAvailabilityStore(IAvailabilityStore):
     center.expires = datetime.datetime.now() + self._ttl
     db_obj = db.VaccinationCenterAvailabilityV1(
       vaccination_center_id=vaccination_center_id,
-      vaccine_type=vaccine_round[0].name,
-      vaccine_round=vaccine_round[1],
-      dates=dates_to_json(data.dates),
-      num_dates=len(data.dates),
+      vaccine_round=vaccine_round,
+      availability_info=data,
       expires=center.expires,
     )
     self._session().merge(db_obj)
@@ -113,7 +105,7 @@ class DefaultUserStore(IUSerStore):
   def _get_user(self, user_id: int) -> t.Tuple[t.Optional[User], bool]:
     userv1 = self._session().query(db.UserV1).get(user_id)
     if userv1 is not None:
-      return User(userv1.id, userv1.chat_id, userv1.first_name), False
+      return userv1.to_api(), False
     return None, False
 
   def get_user_count(self, with_subscription_only: bool) -> int:
@@ -126,7 +118,7 @@ class DefaultUserStore(IUSerStore):
     query = self._session().query(db.UserV1).order_by(db.UserV1.id).offset(offset).limit(limit)
     result = []
     for user in query:
-      result.append(User(user.id, user.chat_id, user.first_name))
+      result.append(user.to_api())
     return result
 
   def register_user(self, user: User) -> None:
@@ -184,6 +176,54 @@ class DefaultUserStore(IUSerStore):
     # Delete all existing subscriptions. We will re-populate them.
     self._session().query(db.SubscriptionV1).filter(db.SubscriptionV1.user_id == user_id).delete()
 
+  def _subscription_query(self,
+    vaccination_center_id: t.Optional[str] = None,
+    vaccine_round: t.Optional[VaccineRound] = None,
+    user_id: t.Optional[int] = None,
+  ) -> Query:
+
+    subs1 = db.aliased(db.SubscriptionV1)
+    subs2 = db.aliased(db.SubscriptionV1)
+    query = self._session().query(db.VaccinationCenterV1, db.UserV1)
+    if vaccination_center_id:
+      query = query.filter(db.VaccinationCenterV1.id == vaccination_center_id)
+    else:
+      query = query.join(db.VaccinationCenterAvailabilityV1).add_entity(db.VaccinationCenterAvailabilityV1)
+    query = query.join(subs1, subs1.user_id == db.UserV1.id).join(subs2, subs2.user_id == db.UserV1.id)
+
+    if user_id is not None:
+      query = query.filter(db.UserV1.id == user_id)
+
+    if vaccine_round is not None:
+      vaccine_type_filter = vaccine_round[0].name
+      if vaccine_round[1] == 0:
+        vaccine_round_filter = True
+      else:
+        vaccine_round_filter = (subs1.vaccine_round == vaccine_round[1])
+    else:
+      vaccine_type_filter = db.VaccinationCenterAvailabilityV1.vaccine_type
+      vaccine_round_filter = subs1.vaccine_round == db.VaccinationCenterAvailabilityV1.vaccine_round
+    query = query.filter(
+      (subs1.type == subs1.Type.VACCINE_TYPE_AND_ROUND.name) &
+      (subs1.vaccine_type == vaccine_type_filter) &
+      vaccine_round_filter
+    )
+
+    #query = query.join(subs2, subs2.user_id == db.UserV1.id)
+    if vaccination_center_id:
+      vaccination_center_filter = vaccination_center_id
+    else:
+      vaccination_center_filter = db.VaccinationCenterV1.id
+    query = query.filter((
+        (subs2.type == subs2.Type.VACCINATION_CENTER_ID.name) &
+        (subs2.vaccination_center_id == vaccination_center_filter)
+      )|(
+        (subs2.type == subs2.Type.VACCINATION_CENTER_QUERY.name) &
+        (db.VaccinationCenterV1.construct_search_query(subs2.vaccination_center_query))
+    ))
+
+    return query
+
   def get_users_subscribed_to(self,
     vaccination_center_id: str,
     vaccine_round: VaccineRound,
@@ -191,37 +231,10 @@ class DefaultUserStore(IUSerStore):
     limit: t.Optional[int] = None,
   ) -> t.List[User]:
 
-    subs1 = db.aliased(db.SubscriptionV1)
-    subs2 = db.aliased(db.SubscriptionV1)
-
-    if vaccine_round[1] == 0:
-      vaccine_round_filter = True
-    else:
-      vaccine_round_filter = (subs1.vaccine_round == vaccine_round[1])
-
-    query = (self._session().query(db.VaccinationCenterV1, db.UserV1)
-      .filter(db.VaccinationCenterV1.id == vaccination_center_id)
-      .join(subs1)
-      .filter(
-        (subs1.type == subs1.Type.VACCINE_TYPE_AND_ROUND.name) &
-        (subs1.vaccine_type == vaccine_round[0].name) &
-        vaccine_round_filter
-      )
-      .join(subs2)
-      .filter((
-          (subs2.type == subs2.Type.VACCINATION_CENTER_ID.name) &
-          (subs2.vaccination_center_id == vaccination_center_id)
-        )|(
-          (subs2.type == subs2.Type.VACCINATION_CENTER_QUERY.name) &
-          (db.VaccinationCenterV1.construct_search_query(subs2.vaccination_center_query))
-        ))
-      .offset(offset)
-      .limit(limit)
-    )
-
-    user: db.UserV1
+    query = self._subscription_query(vaccination_center_id, vaccine_round, None)
+    query = query.offset(offset).limit(limit)
     result = []
+    user: db.UserV1
     for _vcenter, user in query:
-      result.append(User(user.id, user.chat_id, user.first_name))
-
+      result.append(user.to_api())
     return result

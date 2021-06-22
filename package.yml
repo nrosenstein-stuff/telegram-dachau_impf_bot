@@ -5,6 +5,7 @@ description: Package description here.
 requirements:
 - python ^3.5
 - sqlalchemy
+- sqlalchemy-repr
 - python-telegram-bot
 - requests
 - bs4 ^0.0.1

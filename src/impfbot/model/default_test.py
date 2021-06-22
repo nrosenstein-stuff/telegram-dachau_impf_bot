@@ -1,29 +1,30 @@
 
 import datetime
+import typing as t
 from unittest import TestCase
 from impfbot.contrib.de.bavaria.dachau import ASTRA_2_URL
 
-from impfbot.model.api import VaccineRound, VaccineType, Subscription, User, VaccinationCenter
+from impfbot.model.api import AvailabilityInfo, VaccineRound, VaccineType, Subscription, User, VaccinationCenter
 from . import db
 from .default import DefaultAvailabilityStore, DefaultUserStore
 
 
 class DefaultTest(TestCase):
 
-  def setUp(self):
+  def setUp(self) -> None:
     db.init_database('sqlite:///:memory:')
     self.scoped_session = db.ScopedSession()
     self.avail = DefaultAvailabilityStore(self.scoped_session, datetime.timedelta(1))
     self.users = DefaultUserStore(self.scoped_session)
 
-  def setup_test_centers(self):
+  def setup_test_centers(self) -> None:
     with self.scoped_session:
       self.abc = VaccinationCenter('abc', 'ABC Vacc', 'https://abc.vacc', 'Vaccheim')
       self.xyz = VaccinationCenter('xyz', 'XYZ Vacc', 'https://xyz.vacc', 'Defheim')
       self.avail.upsert_vaccination_center(self.abc)
       self.avail.upsert_vaccination_center(self.xyz)
 
-  def test_search_vaccination_centers(self):
+  def test_search_vaccination_centers(self) -> None:
     self.setup_test_centers()
     with self.scoped_session:
       assert set(self.avail.search_vaccination_centers(None)) == set([self.abc, self.xyz])
@@ -58,7 +59,7 @@ class DefaultTest(TestCase):
         vaccine_rounds=[VaccineRound(VaccineType.JOHNSON_AND_JOHNSON, 0)],
         vaccination_center_ids=['xyz']))
 
-  def test_subscriptions(self):
+  def test_subscriptions(self) -> None:
     self.setup_test_users()
     with self.scoped_session:
       assert self.users.get_subscription(self.u1.id) == Subscription(
