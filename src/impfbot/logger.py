@@ -1,5 +1,6 @@
 
 import atexit
+import html
 import logging
 import queue
 import threading
@@ -28,7 +29,7 @@ class TelegramBotLoggingHandler(logging.Handler):
         break
       self.bot.send_message(
         chat_id=self.chat_id,
-        text=f'<code>{self.format(record)}</code>',
+        text=f'<code>{html.escape(self.format(record))}</code>',
         parse_mode=ParseMode.HTML)
 
   def emit(self, record: logging.LogRecord) -> None:
