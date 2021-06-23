@@ -5,8 +5,7 @@ users of the available dates. This is to avoid having to constantly check for av
 manually.
 
 The architecture allows that other portals for vaccination signup could be supported easily, but we
-would probably need to add functionality to subscribe to a subset of available portals relevant for
-the user instead of sending them any and all available slots as is the case right now.
+would probably need to add functionality to subscribe to a subset of available portals.
 
 ![Demo](.img/demo.png)
 
