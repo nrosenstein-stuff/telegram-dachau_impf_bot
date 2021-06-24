@@ -51,10 +51,11 @@ class TelegramAvailabilityDispatcher(api.IDataReceiver):
   def format_availability_html(
     vcenter: model.VaccinationCenter,
     vaccine_round: model.VaccineRound,
-    data: model.AvailabilityInfo
+    data: model.AvailabilityInfo,
+    long: bool = True
   ) -> str:
 
-    return _('notification.immediate',
+    return _('notification.immediate' if long else 'notification.short',
       vaccine_name=vaccine_round.to_text(),
       link=vcenter.url,
       name=vcenter.name,

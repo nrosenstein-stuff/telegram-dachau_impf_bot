@@ -102,6 +102,7 @@ class Impfbot:
     for vcenter, vaccine_round, data in availability:
       lines.append(TelegramAvailabilityDispatcher.format_availability_html(vcenter, vaccine_round, data))
     if lines:
+      lines.insert(0, '')
       lines.insert(0, _('conversation.summary_header'))
     else:
       lines.append(_('conversation.no_availability'))

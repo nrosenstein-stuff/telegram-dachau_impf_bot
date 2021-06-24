@@ -54,6 +54,7 @@ subscriptions:
 
 notification:
   immediate: 'Es wurden Termine frei für die <b>{vaccine_name}</b> bei <a href="{link}">{name}</a>: {dates}'
+  short: '<b>{vaccine_name}</b> bei <a href="{link}">{name}</a>: {dates}'
 
 vaccine_type:
   BIONTECH: 'BioNTech'
