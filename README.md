@@ -26,6 +26,13 @@ Sagt dir bescheid wenn im Landkreis Dachau und Umgebung Impftermine frei werden.
 
 ## Changelog
 
+*Neu in Version 1.2.0*
+
+Macht der Bot eigentlich irgendwas?? Ja! Aber momentan werden wohl einfach
+wenige Impftermine frei. Wenn du das /termine Kommando verwendest und keine
+Termine frei sind, sagt dir der Bot von jetzt an zumindest wann er das letzte
+mal auf der Website nach freien Terminen nachgesehen hat. 😌
+
 *Neu in Version 1.1.0*
 
 Jetzt kannst du mit dem Kommando /termine einsehen, welche zuletzt bekannten

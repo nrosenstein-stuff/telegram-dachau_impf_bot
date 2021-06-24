@@ -105,6 +105,10 @@ class Impfbot:
       lines.insert(0, _('conversation.summary_header'))
     else:
       lines.append(_('conversation.no_availability'))
+      if self.poller.last_poll:
+        date = self.poller.last_poll.strftime(_('format.date'))
+        time = self.poller.last_poll.strftime(_('format.time'))
+        lines[-1] += ' ' + _('conversation.last_checked_on', date=date, time=time)
     update.message.reply_html('\n'.join(lines))
 
   def _callback_query_handler(self, update: Update, context: CallbackContext) -> None:

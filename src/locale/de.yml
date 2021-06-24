@@ -19,6 +19,11 @@ conversation:
     /info - Zeige informationen über den Bot an.
   summary_header: 'Zuletzt bekannte freie Termine:'
   no_availability: Es sind aktuell keine freien Termine bekannt, die zu deinen Einstellungen passen.
+  last_checked_on: Zuletzt geprüft am {date} um {time} Uhr.
+
+format:
+  date: '%a, %d %b %Y'
+  time: '%H:%M'
 
 emoji:
   enabled: ✅

@@ -35,6 +35,9 @@ class Config:
   #: The log level to use for sending logs to the #telegram_logger_chat_id.
   telegram_logger_level: str = 'WARN'
 
+  #: System-locale
+  locale: str = 'de_DE'
+
   @classmethod
   def load(cls, filename: str) -> 'Config':
     with open(filename) as fp:

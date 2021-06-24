@@ -14,6 +14,7 @@ class DefaultPoller:
     self._frequency = frequency
     self.receivers: t.List[api.IDataReceiver] = []
     self.plugins: t.List[api.IPlugin] = []
+    self.last_poll: t.Optional[datetime.datetime] = None
 
   def mainloop(self) -> None:
     while True:
@@ -24,6 +25,7 @@ class DefaultPoller:
       time.sleep(self._frequency.total_seconds())
 
   def poll_once(self) -> None:
+    self.last_poll = datetime.datetime.now()
     dispatcher = api.IDataReceiver.Dispatcher(self.receivers)
     dispatcher.begin_polling()
     try:
