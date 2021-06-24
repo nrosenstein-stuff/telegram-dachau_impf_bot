@@ -30,7 +30,7 @@ test_requirements = [
 
 setuptools.setup(
   name = 'impfbot',
-  version = '1.2.0',
+  version = '1.2.1',
   author = 'Niklas Rosenstein',
   author_email = 'rosensteinniklas@gmail.com',
   description = 'Package description here.',
