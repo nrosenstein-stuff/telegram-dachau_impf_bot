@@ -5,6 +5,7 @@ import logging
 import threading
 import typing as t
 import uuid
+from prometheus_client import start_http_server
 from telegram import Update, ParseMode, TelegramError
 from telegram.ext import CallbackContext, CommandHandler, Updater, CallbackQueryHandler
 from telegram.message import Message
@@ -20,6 +21,7 @@ from impfbot.utils.locale import get as _
 from impfbot.utils import tgui
 from .config import Config
 from .sub import SubscriptionManager
+from . import metrics
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +53,18 @@ class Impfbot:
     self.tgui_action_store = tgui.DefaultActionStore(cachetools.TTLCache(2**16, ttl=3600 * 24))
     self.init_commands()
 
+    @metrics.users_num_registered.set_function
+    def _user_count() -> int:
+      with self.session:
+        return self.user_store.get_user_count(False)
+
+    @metrics.users_num_subscribed.set_function
+    def _user_subscribed_count() -> int:
+      with self.session:
+        return self.user_store.get_user_count(False)
+
+    metrics.tgui_action_cache_size.set_function(lambda: len(self.tgui_action_store._cache))
+
   def add_command(self, name: str, handler_func: t.Callable) -> None:
     def wrapper(*args, **kwargs):
       with self.session:
@@ -68,6 +82,7 @@ class Impfbot:
     self.telegram_updater.dispatcher.add_handler(CallbackQueryHandler(self._callback_query_handler))
 
   def mainloop(self) -> None:
+    start_http_server(self.config.metrics_port)
     threading.Thread(target=self.poller.mainloop, daemon=True).start()
     self.telegram_updater.start_polling()
     self.telegram_updater.idle()
@@ -80,22 +95,26 @@ class Impfbot:
     return user
 
   def _command_start(self, update: Update, context: CallbackContext) -> None:
+    metrics.commands_executed.labels('/start').inc()
     if not update.message: return
     user = self._register_user_from_message(update.message)
     msg = _('conversation.start', first_name=user.first_name, bot_name=self.bot.name.replace('_', '\\_'))
     update.message.reply_markdown(msg)
 
   def _command_config(self, update: Update, context: CallbackContext) -> None:
+    metrics.commands_executed.labels('/einstellungen').inc()
     if not update.message: return
     ctx = tgui.DefaultContext(self.tgui_action_store, update)
     self.subs.get_root_view(ctx.user_id()).respond(ctx)
 
   def _command_info(self, update: Update, context: CallbackContext) -> None:
+    metrics.commands_executed.labels('/info').inc()
     if not update.message: return
     message = _('conversation.info_html', bot_name=self.bot.name[1:], version=__version__)
     update.message.reply_html(message, disable_web_page_preview =True)
 
   def _command_availability(self, update: Update, context: CallbackContext) -> None:
+    metrics.commands_executed.labels('/termine').inc()
     if not update.message or not update.message.from_user: return
     user_id = update.message.from_user.id
     availability = self.user_store.get_relevant_availability_for_user(user_id)

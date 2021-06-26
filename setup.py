@@ -23,6 +23,8 @@ requirements = [
   'bs4 >=0.0.1,<1.0.0',
   'databind.core >=0.11.0,<1.0.0',
   'databind.yaml >=0.1.3,<1.0.0',
+  'nr.stream >=0.1.2,<1.0.0',
+  'prometheus-client >=0.11.0,<1.0.0',
 ]
 test_requirements = [
   'pytest',

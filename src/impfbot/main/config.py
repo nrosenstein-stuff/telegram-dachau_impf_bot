@@ -38,6 +38,9 @@ class Config:
   #: System-locale
   locale: str = 'de_DE'
 
+  #: Port for the Prometheus metrics.
+  metrics_port: int = 8000
+
   @classmethod
   def load(cls, filename: str) -> 'Config':
     with open(filename) as fp:
