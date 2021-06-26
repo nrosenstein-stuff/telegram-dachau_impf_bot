@@ -55,7 +55,7 @@ class TelegramAvailabilityDispatcher(api.IDataReceiver):
     long: bool = True
   ) -> str:
 
-    return _('notification.immediate' if long else 'notification.short',
+    return _('notification.immediate',
       vaccine_name=vaccine_round.to_text(),
       link=vcenter.url,
       name=vcenter.name,

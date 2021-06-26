@@ -8,6 +8,7 @@ import uuid
 from telegram import Update, ParseMode, TelegramError
 from telegram.ext import CallbackContext, CommandHandler, Updater, CallbackQueryHandler
 from telegram.message import Message
+from nr.stream import Stream
 
 from impfbot import __version__
 from impfbot.model import ScopedSession, User
@@ -99,8 +100,12 @@ class Impfbot:
     user_id = update.message.from_user.id
     availability = self.user_store.get_relevant_availability_for_user(user_id)
     lines = []
-    for vcenter, vaccine_round, data in availability:
-      lines.append(TelegramAvailabilityDispatcher.format_availability_html(vcenter, vaccine_round, data))
+    for vaccine_round, values in Stream(availability).groupby(lambda t: t[1]):
+      lines.append(f'<b>{vaccine_round.to_text()}</b>')
+      for vcenter, vaccine_round, data in values:
+        dates = ', '.join(d.strftime('%Y-%m-%d') for d in data.dates)
+        lines.append(f'• <a href="{vcenter.url}">{vcenter.name}</a>: {dates}')
+      lines.append('')
     if lines:
       lines.insert(0, '')
       lines.insert(0, _('conversation.summary_header'))
