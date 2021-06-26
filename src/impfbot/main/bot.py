@@ -82,7 +82,7 @@ class Impfbot:
     self.telegram_updater.dispatcher.add_handler(CallbackQueryHandler(self._callback_query_handler))
 
   def mainloop(self) -> None:
-    start_http_server(self.config.metrics_port)
+    start_http_server(self.config.metrics_port, self.config.metrics_host)
     threading.Thread(target=self.poller.mainloop, daemon=True).start()
     self.telegram_updater.start_polling()
     self.telegram_updater.idle()

@@ -41,6 +41,9 @@ class Config:
   #: Port for the Prometheus metrics.
   metrics_port: int = 8000
 
+  #: Host for the Prometheus metrics.
+  metrics_host: str = 'localhost'
+
   @classmethod
   def load(cls, filename: str) -> 'Config':
     with open(filename) as fp:
