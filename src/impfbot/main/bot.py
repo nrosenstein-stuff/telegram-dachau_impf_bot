@@ -61,7 +61,7 @@ class Impfbot:
     @metrics.users_num_subscribed.set_function
     def _user_subscribed_count() -> int:
       with self.session:
-        return self.user_store.get_user_count(False)
+        return self.user_store.get_user_count(True)
 
     metrics.tgui_action_cache_size.set_function(lambda: len(self.tgui_action_store._cache))
 
