@@ -45,4 +45,4 @@ class AvailabilityMetrics(polling.IDataReceiver):
   ) -> None:
 
     number_of_dates_with_available_vaccination_appointments.labels(
-      vaccine_round.type.name, vaccine_round.round, center.id, center.name, center.location)
+      vaccine_round.type.name, vaccine_round.round, center.id, center.name, center.location).set(len(data.dates))
