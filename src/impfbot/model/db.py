@@ -1,7 +1,9 @@
 
 import abc
+import contextlib
 import datetime
 import enum
+import functools
 import typing as t
 from sqlalchemy import create_engine, Column, DateTime, Integer, String, ForeignKey, JSON
 from sqlalchemy.engine import Engine
@@ -26,6 +28,22 @@ engine: t.Optional[Engine] = None
 Base = declarative_base(cls=RepresentableBase)
 
 
+class HasSession:
+  session: 'ISessionProvider'
+
+  def __init__(self, session: 'ISessionProvider') -> None:
+    self.session = session
+
+  @staticmethod
+  def ensured(func: t.Callable) -> t.Callable:
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+      assert isinstance(self, HasSession), '@ISessionProvider.ensured can only decorated methods of HasSession subclasses'
+      with self.session.ensure():
+        return func(self, *args, **kwargs)
+    return wrapper
+
+
 class ISessionProvider(metaclass=abc.ABCMeta):
 
   @abc.abstractmethod
@@ -36,6 +54,17 @@ class ISessionProvider(metaclass=abc.ABCMeta):
 
   @abc.abstractmethod
   def __exit__(self, exc_type, exc_value, exc_tb) -> None: ...
+
+  def ensure(self) -> t.ContextManager[Session]:
+    try:
+      session = self.__call__()
+    except RuntimeError:
+      return self
+    else:
+      @contextlib.contextmanager
+      def manager():
+        yield session
+      return manager()
 
 
 class ScopedSession(ISessionProvider):

@@ -8,7 +8,7 @@ from . import db
 from .api import AvailabilityInfo, VaccineRound, IAvailabilityStore, IUSerStore, Subscription, User, VaccinationCenter, VaccineType
 
 
-class DefaultAvailabilityStore(IAvailabilityStore):
+class DefaultAvailabilityStore(IAvailabilityStore, db.HasSession):
   """
   Stores details about vaccination centers and availability info in the database.
 
@@ -20,31 +20,34 @@ class DefaultAvailabilityStore(IAvailabilityStore):
   """
 
   def __init__(self, session: db.ISessionProvider, ttl: datetime.timedelta) -> None:
-    self._session = session
-    self._ttl = ttl
+    super().__init__(session)
+    self.ttl = ttl
 
+  @db.HasSession.ensured
   def delete_vaccination_center(self, vaccination_center_id: str) -> None:
     # TODO(NiklasRosenstein): Drop connected availability?
-    obj = self._session().query(db.VaccinationCenterV1).get(vaccination_center_id)
+    obj = self.session().query(db.VaccinationCenterV1).get(vaccination_center_id)
     if obj:
-      self._session().delete(obj)
+      self.session().delete(obj)
 
+  @db.HasSession.ensured
   def upsert_vaccination_center(self, vaccination_center: VaccinationCenter) -> None:
     db_obj = db.VaccinationCenterV1(
       id=vaccination_center.id,
       name=vaccination_center.name,
       url=vaccination_center.url,
       location=vaccination_center.location,
-      expires=datetime.datetime.now() + self._ttl)
-    self._session().merge(db_obj)
+      expires=datetime.datetime.now() + self.ttl)
+    self.session().merge(db_obj)
 
+  @db.HasSession.ensured
   def search_vaccination_centers(self,
     search_query: t.Optional[str],
     offset: t.Optional[int] = None,
     limit: t.Optional[int] = None,
   ) -> t.List[VaccinationCenter]:
 
-    query = self._session().query(db.VaccinationCenterV1) \
+    query = self.session().query(db.VaccinationCenterV1) \
       .filter(db.VaccinationCenterV1.expires > datetime.datetime.now()) \
       .order_by(db.VaccinationCenterV1.id) \
       .offset(offset)\
@@ -61,79 +64,102 @@ class DefaultAvailabilityStore(IAvailabilityStore):
       result.append(db_obj.to_api())
     return result
 
+  def _availability_query(self,
+    vaccination_center_id: str,
+    vaccine_round: t.Optional[VaccineRound],
+  ) -> 'Query[db.VaccinationCenterAvailabilityV1]':
+
+    query = self.session().query(db.VaccinationCenterAvailabilityV1)\
+      .filter(db.VaccinationCenterAvailabilityV1.vaccination_center_id == vaccination_center_id)\
+      .filter(db.VaccinationCenterAvailabilityV1.expires > datetime.datetime.now())
+
+    if vaccine_round is not None:
+      query = query.filter(db.VaccinationCenterAvailabilityV1.vaccine_type == vaccine_round[0].name)
+      query = query.filter(db.VaccinationCenterAvailabilityV1.vaccine_round == vaccine_round[1])
+
+    return query
+
+  @db.HasSession.ensured
+  def get_per_vaccine_round_availability(self,
+    vaccination_center_id: str,
+  ) -> t.List[t.Tuple[VaccineRound, AvailabilityInfo]]:
+
+    query = self._availability_query(vaccination_center_id, None)
+    result = []
+    for item in query:
+      result.append((item.get_vaccine_round(), item.get_availability_info()))
+    return result
+
+  @db.HasSession.ensured
   def get_availability(self,
     vaccination_center_id: str,
     vaccine_round: t.Optional[VaccineRound]
   ) -> AvailabilityInfo:
 
-    query = self._session().query(db.VaccinationCenterAvailabilityV1)\
-      .filter(db.VaccinationCenterAvailabilityV1.vaccination_center_id == vaccination_center_id) \
-      .filter(db.VaccinationCenterAvailabilityV1.expires > datetime.datetime.now())
-    if vaccine_round is not None:
-      query = query.filter(db.VaccinationCenterAvailabilityV1.vaccine_type == vaccine_round[0].name)
-      if vaccine_round[0] is not None:
-        query = query.filter(db.VaccinationCenterAvailabilityV1.vaccine_round == vaccine_round[1])
+    query = self._availability_query(vaccination_center_id, vaccine_round)
     dates: t.Set[datetime.date] = set()
     for result in query:
       dates.update(result.get_availability_info().dates)
     return AvailabilityInfo(dates=sorted(dates))
 
+  @db.HasSession.ensured
   def set_availability(self,
     vaccination_center_id: str,
     vaccine_round: VaccineRound,
     data: AvailabilityInfo
   ) -> None:
 
-    center = self._session().query(db.VaccinationCenterV1).get(vaccination_center_id)
+    center = self.session().query(db.VaccinationCenterV1).get(vaccination_center_id)
     if not center:
       raise ValueError(f'Unknown vaccination center id: {vaccination_center_id!r}')
-    center.expires = datetime.datetime.now() + self._ttl
+    center.expires = datetime.datetime.now() + self.ttl
     db_obj = db.VaccinationCenterAvailabilityV1(
       vaccination_center_id=vaccination_center_id,
       vaccine_round=vaccine_round,
       availability_info=data,
       expires=center.expires,
     )
-    self._session().merge(db_obj)
+    self.session().merge(db_obj)
 
 
-class DefaultUserStore(IUSerStore):
-
-  def __init__(self, session: db.ISessionProvider) -> None:
-    self._session = session
+class DefaultUserStore(IUSerStore, db.HasSession):
 
   def _get_user(self, user_id: int) -> t.Tuple[t.Optional[User], bool]:
-    userv1 = self._session().query(db.UserV1).get(user_id)
+    userv1 = self.session().query(db.UserV1).get(user_id)
     if userv1 is not None:
       return userv1.to_api(), False
     return None, False
 
+  @db.HasSession.ensured
   def get_user_count(self, with_subscription_only: bool) -> int:
-    query = self._session().query(db.UserV1)
+    query = self.session().query(db.UserV1)
     if with_subscription_only:
       query = query.join(db.SubscriptionV1).filter(db.SubscriptionV1.id != None)
     return query.distinct(db.UserV1.id).count()
 
+  @db.HasSession.ensured
   def get_users(self, offset: t.Optional[int] = None, limit: t.Optional[int] = None) -> t.List[User]:
-    query = self._session().query(db.UserV1).order_by(db.UserV1.id).offset(offset).limit(limit)
+    query = self.session().query(db.UserV1).order_by(db.UserV1.id).offset(offset).limit(limit)
     result = []
     for user in query:
       result.append(user.to_api())
     return result
 
+  @db.HasSession.ensured
   def register_user(self, user: User) -> None:
     has_user, in_old_table = self._get_user(user.id)
     if not has_user or in_old_table or has_user != user:
-      self._session().merge(db.UserV1(
+      self.session().merge(db.UserV1(
         id=user.id,
         chat_id=user.chat_id,
         first_name=user.first_name,
         registered_at=datetime.datetime.now()
       ))
 
+  @db.HasSession.ensured
   def get_subscription(self, user_id: int) -> Subscription:
     result = Subscription()
-    for sub in self._session().query(db.SubscriptionV1).filter(db.SubscriptionV1.user_id == user_id):
+    for sub in self.session().query(db.SubscriptionV1).filter(db.SubscriptionV1.user_id == user_id):
       if sub.type == db.SubscriptionV1.Type.VACCINE_TYPE_AND_ROUND.name:
         assert sub.vaccine_type is not None
         assert sub.vaccine_round is not None
@@ -148,10 +174,11 @@ class DefaultUserStore(IUSerStore):
         raise RuntimeError(f'unhandled subscription type: {sub.type}')
     return result
 
+  @db.HasSession.ensured
   def subscribe_user(self, user_id: int, subscription: Subscription) -> None:
     self.unsubscribe_user(user_id)
     # Re-create all the subscription details.
-    s = self._session()
+    s = self.session()
     for vaccine_round in subscription.vaccine_rounds:
       s.add(db.SubscriptionV1(
         user_id=user_id,
@@ -172,9 +199,10 @@ class DefaultUserStore(IUSerStore):
         vaccination_center_query=vaccination_center_query,
       ))
 
+  @db.HasSession.ensured
   def unsubscribe_user(self, user_id: int) -> None:
     # Delete all existing subscriptions. We will re-populate them.
-    self._session().query(db.SubscriptionV1).filter(db.SubscriptionV1.user_id == user_id).delete()
+    self.session().query(db.SubscriptionV1).filter(db.SubscriptionV1.user_id == user_id).delete()
 
   def _subscription_query(self,
     vaccination_center_id: t.Optional[str] = None,
@@ -185,7 +213,7 @@ class DefaultUserStore(IUSerStore):
     now = datetime.datetime.now()
     subs1 = db.aliased(db.SubscriptionV1)
     subs2 = db.aliased(db.SubscriptionV1)
-    query = self._session().query(db.VaccinationCenterV1, db.UserV1)
+    query = self.session().query(db.VaccinationCenterV1, db.UserV1)
     query = query.filter(db.VaccinationCenterV1.expires > now)
     if vaccination_center_id:
       query = query.filter(db.VaccinationCenterV1.id == vaccination_center_id)
@@ -228,6 +256,7 @@ class DefaultUserStore(IUSerStore):
 
     return query
 
+  @db.HasSession.ensured
   def get_users_subscribed_to(self,
     vaccination_center_id: str,
     vaccine_round: VaccineRound,
@@ -243,6 +272,7 @@ class DefaultUserStore(IUSerStore):
       result.append(user.to_api())
     return result
 
+  @db.HasSession.ensured
   def get_relevant_availability_for_user(self, user_id: int,
   ) -> t.List[t.Tuple[VaccinationCenter, VaccineRound, AvailabilityInfo]]:
 
