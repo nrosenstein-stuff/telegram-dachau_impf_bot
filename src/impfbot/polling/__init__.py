@@ -1,2 +1,2 @@
 
-from .api import IDataReceiver
+from .api import IDataReceiver, IVaccinationCenter, IPlugin

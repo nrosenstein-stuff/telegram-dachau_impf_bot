@@ -79,6 +79,10 @@ class IAvailabilityStore(metaclass=abc.ABCMeta):
     limit: t.Optional[int] = None) -> t.List[VaccinationCenter]: ...
 
   @abc.abstractmethod
+  def get_per_vaccine_round_availability(self,
+    vaccination_center_id: str) -> t.List[t.Tuple[VaccineRound, AvailabilityInfo]]: ...
+
+  @abc.abstractmethod
   def get_availability(self,
     vaccination_center_id: str,
     vaccine_round: VaccineRound) -> AvailabilityInfo: ...

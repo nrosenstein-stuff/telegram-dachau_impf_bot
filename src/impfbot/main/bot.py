@@ -65,6 +65,10 @@ class Impfbot:
 
     metrics.tgui_action_cache_size.set_function(lambda: len(self.tgui_action_store._cache))
 
+    availability_metrics = metrics.AvailabilityMetrics(self.session, self.availability_store)
+    availability_metrics.publish_all()
+    self.poller.receivers.append(availability_metrics)
+
   def add_command(self, name: str, handler_func: t.Callable) -> None:
     def wrapper(*args, **kwargs):
       with self.session:
