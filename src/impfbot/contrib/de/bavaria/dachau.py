@@ -147,3 +147,11 @@ class DachauMedVaccinationCenter(IVaccinationCenter):
       except Exception:
         logger.exception('An unexpected error occurred while polling salon %s', salon)
     return result
+
+
+if __name__ == '__main__':
+  centers = DachauMedPlugin().get_vaccination_centers()
+  for center in centers:
+    print(center.get_metadata())
+    print(center.check_availability())
+    print()

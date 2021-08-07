@@ -1,3 +1,6 @@
+> Update 2021-08-07: Since the August 1, appointments for vaccinations in Dachau can no logner be
+> scheduled online. The bot has been turned off.
+
 # [@dachau_impf_bot](https://t.me/dachau_impf_bot)
 
 A Telegram bot to check the contents of https://termin.dachau-med.de for available slots and inform
