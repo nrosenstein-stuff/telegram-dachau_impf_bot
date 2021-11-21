@@ -36,7 +36,7 @@ class Config:
   telegram_logger_level: str = 'WARN'
 
   #: System-locale
-  locale: str = 'de_DE'
+  locale: str = 'de_DE.UTF-8'
 
   #: Port for the Prometheus metrics.
   metrics_port: int = 8000
