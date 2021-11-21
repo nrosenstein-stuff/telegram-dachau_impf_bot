@@ -1,0 +1,28 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ develop ]
+    tags: [ '*' ]
+  pull_request:
+    branches: [ develop ]
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag ghcr.io/nrosenstein-stuff/telegram-dachau_impf_bot:${GITHUB_REF##*/}
+
+    - name: Publish Docker image
+      if: github.event_name != 'pull_request'
+      run: docker push ghcr.io/nrosenstein-stuff/telegram-dachau_impf_bot:${GITHUB_REF##*/}
