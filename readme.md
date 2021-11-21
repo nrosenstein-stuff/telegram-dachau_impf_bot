@@ -27,6 +27,11 @@ Sagt dir bescheid wenn im Landkreis Dachau und Umgebung Impftermine frei werden.
 
 ## Changelog
 
+#### New in Version 1.3.0
+
+> Es wurden Anpassungen vorgenommen, um die Termine zur allg. BioNTech Impfung zu
+> unterstützen.
+
 #### Neu in Version 1.2.0
 
 > Macht der Bot eigentlich irgendwas?? Ja! Aber momentan werden wohl einfach
@@ -53,7 +58,7 @@ Sagt dir bescheid wenn im Landkreis Dachau und Umgebung Impftermine frei werden.
 #### 2021-11-21
 
 > Termine für BioNTech Booster-Impfungen können jetzt wieder gebucht werden. Der Bot ist ab sofort wieder
-> verfügbar.
+> verfügbar. (v1.3.0)
 
 #### 2021-08-07
 
