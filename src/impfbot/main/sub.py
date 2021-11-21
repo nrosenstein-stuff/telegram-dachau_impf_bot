@@ -140,9 +140,9 @@ class SubscriptionManager:
 
     # Let the user know when they have a partial subscription.
     msg = _('subscriptions.dialog.main.message')
-    if bool(subscription.vaccine_rounds) != bool(subscription.vaccination_center_ids or
-        subscription.vaccination_center_queries):
-      msg += '\n\n' + _('subscriptions.dialog.main.partial_subscription_warning')
+    if subscription.is_partial():
+      msg += '\n\n' + _('subscriptions.dialog.main.warning') + ': '
+      msg += _('subscriptions.dialog.main.partial_subscription_warning')
 
     view = tgui.View(msg)
     view.add_buttons(

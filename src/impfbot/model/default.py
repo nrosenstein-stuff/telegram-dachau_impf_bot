@@ -204,7 +204,8 @@ class DefaultUserStore(IUSerStore, db.HasSession):
     # Delete all existing subscriptions. We will re-populate them.
     self.session().query(db.SubscriptionV1).filter(db.SubscriptionV1.user_id == user_id).delete()
 
-  def _subscription_query(self,
+  def _subscription_query(
+    self,
     vaccination_center_id: t.Optional[str] = None,
     vaccine_round: t.Optional[VaccineRound] = None,
     user_id: t.Optional[int] = None,
@@ -257,7 +258,8 @@ class DefaultUserStore(IUSerStore, db.HasSession):
     return query
 
   @db.HasSession.ensured
-  def get_users_subscribed_to(self,
+  def get_users_subscribed_to(
+    self,
     vaccination_center_id: str,
     vaccine_round: VaccineRound,
     offset: t.Optional[int] = None,
@@ -273,7 +275,9 @@ class DefaultUserStore(IUSerStore, db.HasSession):
     return result
 
   @db.HasSession.ensured
-  def get_relevant_availability_for_user(self, user_id: int,
+  def get_relevant_availability_for_user(
+    self,
+    user_id: int,
   ) -> t.List[t.Tuple[VaccinationCenter, VaccineRound, AvailabilityInfo]]:
 
     query = self._subscription_query(None, None, user_id)

@@ -36,8 +36,11 @@ subscriptions:
       back: << Zurück
     main:
       message: Hier kannst du auswählen, für welche Impfstoffe und Arztpraxen ich dir Benachrichtigungen schicken soll.
-      partial_subscription_warning: '*Achtung*: Dein Abonnement sind unvollständig. Du erhältst erst
-        Benachrichtigungen wenn du es vervollständigst.'
+      warning: '*Achtung*'
+      partial_subscription_warning: 'Deine Einstellungen sind unvollständig und dir werden demnach keine Termine
+        vorgeschlagen. Sende /einstellungen um deine Einstellungen anzupassen.'
+      not_subscribed: 'Du bekommst aktuell keine Benachrichtigungen. Sende /einstellungen und wähle die Arztpraxen
+        und Impfstoffe aus, für welche du Benachrichtigungen erhalten möchtest.'
       choose_vaccination_centers: Arztpraxen
       choose_vaccine_rounds: Impfstoffe
       unsubscribe_all: Benachrichtigungen ausschalten

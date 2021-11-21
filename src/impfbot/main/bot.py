@@ -109,6 +109,7 @@ class Impfbot:
   def _command_config(self, update: Update, context: CallbackContext) -> None:
     metrics.commands_executed.labels('/einstellungen').inc()
     if not update.message: return
+    self._register_user_from_message(update.message)
     ctx = tgui.DefaultContext(self.tgui_action_store, update)
     self.subs.get_root_view(ctx.user_id()).respond(ctx)
 
@@ -122,6 +123,13 @@ class Impfbot:
     metrics.commands_executed.labels('/termine').inc()
     if not update.message or not update.message.from_user: return
     user_id = update.message.from_user.id
+    subscription = self.user_store.get_subscription(user_id)
+    if not subscription:
+      update.message.reply_text(_('subscriptions.dialog.main.not_subscribed'))
+      return
+    if subscription.is_partial():
+      update.message.reply_text(_('subscriptions.dialog.main.partial_subscription_warning'))
+      return
     availability = self.user_store.get_relevant_availability_for_user(user_id)
     lines = []
     for vaccine_round, values in Stream(availability).groupby(lambda t: t[1]):

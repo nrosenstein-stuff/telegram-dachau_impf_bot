@@ -63,6 +63,14 @@ class Subscription:
   def __bool__(self) -> bool:
     return bool(self.vaccine_rounds or self.vaccination_center_ids or self.vaccination_center_queries)
 
+  def is_partial(self) -> bool:
+    """
+    Returns True if the subscription is partial, i.e. has filters for vaccination rounds or centers,
+    but not the other.
+    """
+
+    return bool(self.vaccine_rounds) != bool(self.vaccination_center_ids or self.vaccination_center_queries)
+
 
 class IAvailabilityStore(metaclass=abc.ABCMeta):
 
