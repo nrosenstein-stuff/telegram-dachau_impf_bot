@@ -37,7 +37,7 @@ def _get_salons(url: str, vaccine_round: VaccineRound) -> t.List['_Salon']:
   soup = _parse_html(response.text)
   form = soup.find('form', id='salon-step-attendant')
   if not form:
-    raise ValueError('form#salon-step-attendant not found')
+    raise ValueError(f'form#salon-step-attendant not found in {url!r}')
   shop_list = soup.find('div', class_='sln-shop-list')
   if not shop_list:
     raise ValueError('div.sln-shop-list not found')
@@ -103,10 +103,10 @@ class DachauMedPlugin(IPlugin):
 
   def get_vaccination_centers(self) -> t.Sequence['IVaccinationCenter']:
     salons = reduce(lambda a, b: a + b, [
-      _get_salons(JNJ_URL, VaccineRound(VaccineType.JOHNSON_AND_JOHNSON, 0)) + \
-      _get_salons(ASTRA_2_URL, VaccineRound(VaccineType.ASTRA_ZENECA, 2)) + \
-      _get_salons(BIONTECH_1_URL, VaccineRound(VaccineType.BIONTECH, 1)) + \
-      _get_salons(BIONTECH_2_URL, VaccineRound(VaccineType.BIONTECH, 2))
+      #_get_salons(JNJ_URL, VaccineRound(VaccineType.JOHNSON_AND_JOHNSON, 0)) + \
+      #_get_salons(ASTRA_2_URL, VaccineRound(VaccineType.ASTRA_ZENECA, 2)) + \
+      #_get_salons(BIONTECH_1_URL, VaccineRound(VaccineType.BIONTECH, 1)) + \
+      _get_salons(BIONTECH_2_URL, VaccineRound(VaccineType.BIONTECH, None))
     ])
 
     # Transpose the salons and group them by location/salon name. Some salon names might be
