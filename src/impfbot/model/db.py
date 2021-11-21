@@ -146,7 +146,6 @@ class VaccinationCenterV1(Base):
     return VaccinationCenter(self.id, self.name, self.url, self.location)
 
 
-
 class VaccinationCenterAvailabilityV1(Base):
   __tablename__ = 'vav_v1'
 

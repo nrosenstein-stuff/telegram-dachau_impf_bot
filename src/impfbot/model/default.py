@@ -124,11 +124,9 @@ class DefaultAvailabilityStore(IAvailabilityStore, db.HasSession):
 
 class DefaultUserStore(IUSerStore, db.HasSession):
 
-  def _get_user(self, user_id: int) -> t.Tuple[t.Optional[User], bool]:
+  def _get_user(self, user_id: int) -> t.Optional[User]:
     userv1 = self.session().query(db.UserV1).get(user_id)
-    if userv1 is not None:
-      return userv1.to_api(), False
-    return None, False
+    return userv1.to_api() if userv1 else None
 
   @db.HasSession.ensured
   def get_user_count(self, with_subscription_only: bool) -> int:
@@ -147,8 +145,8 @@ class DefaultUserStore(IUSerStore, db.HasSession):
 
   @db.HasSession.ensured
   def register_user(self, user: User) -> None:
-    has_user, in_old_table = self._get_user(user.id)
-    if not has_user or in_old_table or has_user != user:
+    has_user = self._get_user(user.id)
+    if not has_user or has_user != user:
       self.session().merge(db.UserV1(
         id=user.id,
         chat_id=user.chat_id,
