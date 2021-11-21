@@ -1,4 +1,6 @@
 
+import argparse
+import code
 import logging
 import telegram
 
@@ -9,6 +11,11 @@ from impfbot.main.bot import Impfbot
 from impfbot.main.config import Config
 from impfbot.utils import locale
 
+try:
+  import bpython
+except ImportError:
+  bpython = None
+
 
 def setup_telegram_logger(bot: telegram.Bot, chat_id: int, level: int, fmt: str) -> None:
   handler = TelegramBotLoggingHandler(bot, chat_id, level)
@@ -17,6 +24,10 @@ def setup_telegram_logger(bot: telegram.Bot, chat_id: int, level: int, fmt: str)
 
 
 def main():
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-i', '--interact', action='store_true', help='Enter an interactive interpreter session.')
+  args = parser.parse_args()
+
   config = Config.load('config.yml')
   setlocale(LC_ALL, config.locale)
 
@@ -24,6 +35,14 @@ def main():
   model.db.init_database(config.database_spec)
   locale.load('src/locale/de.yml')
   bot = Impfbot(config)
+
+  if args.interact:
+    locals_ = {'bot': bot, 'config': config}
+    if bpython:
+      bpython.embed(locals_)
+    else:
+      code.interact(locals_)
+    return
 
   if config.telegram_logger_chat_id is not None:
     setup_telegram_logger(
