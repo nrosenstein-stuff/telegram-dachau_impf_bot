@@ -1,5 +1,5 @@
 
-from prometheus_client import Counter, Gauge
+from prometheus_client import Counter, Gauge  # type: ignore
 from impfbot import polling
 from impfbot import model
 from impfbot.model.db import ISessionProvider

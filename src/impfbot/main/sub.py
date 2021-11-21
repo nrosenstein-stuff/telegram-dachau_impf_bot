@@ -72,13 +72,24 @@ class SubscriptionManager:
   def _get_vaccine_type_picker_view(self, user_id: int, subscription: t.Optional[Subscription] = None) -> tgui.View:
     subscription = subscription or self.users.get_subscription(user_id)
     view = tgui.View(_('subscriptions.dialog.choose_vaccine_rounds.message'))
-    for vaccine_round in KNOWN_ROUNDS:
+
+    # Fetch all known rounds from the availability store.
+    all_rounds = set()
+    for center in self.avail.search_vaccination_centers(None):
+      vaccine_rounds = [vaccine_round for vaccine_round, availability
+                        in self.avail.get_per_vaccine_round_availability(center.id)
+                        if availability.dates]
+      all_rounds.update(vaccine_rounds)
+
+    # Create the UI.
+    for vaccine_round in all_rounds:
       name = vaccine_round.to_text()
       if vaccine_round in subscription.vaccine_rounds:
         name += ' ✅'
       view.add_button(name, {'vaccine_round': vaccine_round}).connect(
         lambda ctx, btn: self._toggle_vaccine_type_filter(ctx.user_id(), btn.args['vaccine_round']))
     view.add_button(_('subscriptions.dialog.general.back')).connect(lambda ctx, btn: self.get_root_view(ctx.user_id()))
+
     return view
 
   def _toggle_match_all(self, user_id: int) -> tgui.View:

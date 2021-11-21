@@ -5,7 +5,7 @@ import logging
 import threading
 import typing as t
 import uuid
-from prometheus_client import start_http_server
+from prometheus_client import start_http_server  # type: ignore
 from telegram import Update, ParseMode, TelegramError
 from telegram.ext import CallbackContext, CommandHandler, Updater, CallbackQueryHandler
 from telegram.message import Message
@@ -13,6 +13,7 @@ from nr.stream import Stream
 
 from impfbot import __version__
 from impfbot.model import ScopedSession, User
+from impfbot.model.api import AvailabilityInfo
 from impfbot.model.default import DefaultAvailabilityStore, DefaultUserStore
 from impfbot.polling.api import IPlugin
 from impfbot.polling.default import DefaultPoller

@@ -26,6 +26,7 @@ __all__ = [
 
 engine: t.Optional[Engine] = None
 Base = declarative_base(cls=RepresentableBase)
+T_Callable = t.TypeVar('T_Callable', bound=t.Callable)
 
 
 class HasSession:
@@ -35,13 +36,13 @@ class HasSession:
     self.session = session
 
   @staticmethod
-  def ensured(func: t.Callable) -> t.Callable:
+  def ensured(func: T_Callable) -> T_Callable:
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs):
       assert isinstance(self, HasSession), '@ISessionProvider.ensured can only decorated methods of HasSession subclasses'
       with self.session.ensure():
         return func(self, *args, **kwargs)
-    return wrapper
+    return t.cast(T_Callable, wrapper)
 
 
 class ISessionProvider(metaclass=abc.ABCMeta):
@@ -168,9 +169,15 @@ class VaccinationCenterAvailabilityV1(Base):
     self.dates = [dt.strftime('%Y-%m-%d') for dt in sorted(availability_info.dates)]
     self.num_dates = len(self.dates)
     self.expires = expires
+    self._validate()
+
+  def _validate(self) -> None:
+    assert self.vaccine_type is not None, "vaccine_type cannot be None"
+    assert self.vaccine_round is not None, "vaccine_round cannot be None"
 
   def get_vaccine_round(self) -> VaccineRound:
-    assert self.vaccine_type is not None and self.vaccine_round is not None
+    self._validate()
+    assert self.vaccine_round is not None
     return VaccineRound(VaccineType[self.vaccine_type], self.vaccine_round)
 
   def get_availability_info(self) -> AvailabilityInfo:

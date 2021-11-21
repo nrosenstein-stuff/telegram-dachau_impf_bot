@@ -26,9 +26,6 @@ requirements = [
   'nr.stream >=0.1.2,<1.0.0',
   'prometheus-client >=0.11.0,<1.0.0',
 ]
-test_requirements = [
-  'pytest',
-]
 
 setuptools.setup(
   name = 'impfbot',
@@ -45,7 +42,7 @@ setuptools.setup(
   include_package_data = True,
   install_requires = requirements,
   extras_require = {},
-  tests_require = test_requirements,
+  tests_require = [],
   python_requires = '>=3.5.0,<4.0.0',
   data_files = [],
   entry_points = {

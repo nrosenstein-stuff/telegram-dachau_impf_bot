@@ -106,7 +106,7 @@ class DachauMedPlugin(IPlugin):
       #_get_salons(JNJ_URL, VaccineRound(VaccineType.JOHNSON_AND_JOHNSON, 0)) + \
       #_get_salons(ASTRA_2_URL, VaccineRound(VaccineType.ASTRA_ZENECA, 2)) + \
       #_get_salons(BIONTECH_1_URL, VaccineRound(VaccineType.BIONTECH, 1)) + \
-      _get_salons(BIONTECH_2_URL, VaccineRound(VaccineType.BIONTECH, None))
+      _get_salons(BIONTECH_2_URL, VaccineRound(VaccineType.BIONTECH, 0))
     ])
 
     # Transpose the salons and group them by location/salon name. Some salon names might be
