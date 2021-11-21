@@ -13,9 +13,19 @@ Dachau bei München auf https://termin.dachau-med.de zu buchen gibt.
 ## Deployment
 
 ```
-$ git clone https://github.com/NiklasRosenstein/telegram-dachau_impf_bot.git
-$ cd telegram-dachau_impf_bot
-$ echo "token: TOKEN_HERE" >config.yml
+$ cat <<EOF >docker-compose.yml
+version: '3.4'
+services:
+  bot:
+    image: ghcr.io/nrosenstein-stuff/telegram-dachau_impf_bot:develop
+    volumes:
+      - ./config.yml:/opt/app/config.yml
+      - ./data:/opt/app/data
+$ cat <<EOF >config.yml
+token: $TELEGRAM_BOT_TOKEN_HERE
+admin_user_ids: [ $TELEGRAM_USER_ID ]
+telegram_logger_chat_id: $TELEGRAM_USER_ID_OR_CHAT_ID
+telegram_logger_level: WARN
 $ docker-compose up -d
 ```
 
